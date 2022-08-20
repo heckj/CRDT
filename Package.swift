@@ -4,6 +4,12 @@ import PackageDescription
 
 let package = Package(
     name: "CRDT",
+    platforms: [
+        .iOS(.v13),
+        .macOS(.v10_15),
+        .tvOS(.v13),
+        .watchOS(.v6),
+    ],
     products: [
         .library(
             name: "CRDT",
@@ -11,6 +17,7 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-docc-plugin", branch: "main"),
     ],
     targets: [
         .target(
