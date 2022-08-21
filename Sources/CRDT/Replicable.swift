@@ -54,7 +54,7 @@ extension DeltaCRDT {
     ///
     /// - Parameter delta: The incremental, partial state to merge.
     /// - Returns: A new data type instance with the merged state of this data type instance and `delta`.
-    func mergingDelta(_ delta: Delta) -> Self {
+    func mergeDelta(_ delta: Delta) -> Self {
         mergeDelta([delta])
     }
 }
