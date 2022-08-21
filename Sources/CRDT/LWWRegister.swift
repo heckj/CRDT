@@ -10,6 +10,7 @@ import Foundation
 /// Based on LWWRegister implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct LWWRegister<ActorID: Hashable & Comparable, T> {
+    /// The replicated state structure for LWWRegister
     public struct Atom: Identifiable, PartiallyOrderable {
         var value: T
         var timestamp: TimeInterval
@@ -30,7 +31,7 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
     }
 
     private var entry: Atom
-    private var selfId: ActorID
+    internal let selfId: ActorID
 
     public var value: T {
         get {

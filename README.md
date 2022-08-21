@@ -4,7 +4,7 @@ An implementation of ∂-state based CRDTs (conflict-free replicated data types)
 
 [![codecov](https://codecov.io/gh/heckj/CRDT/branch/main/graph/badge.svg?token=AP68RBHNHM)](https://codecov.io/gh/heckj/CRDT)
 
-![code coverage chart](https://codecov.io/gh/heckj/CRDT/branch/main/graphs/sunburst.svg?token=AP68RBHNHM)
+[![code coverage chart](https://codecov.io/gh/heckj/CRDT/branch/main/graphs/sunburst.svg?token=AP68RBHNHM)](https://codecov.io/gh/heckj/CRDT)
 
 This library implements well-known state-based CRDTs as swift generics, and supplies a replicator to support using CRDTs in your own data models.
 

@@ -68,6 +68,7 @@ final class LWWRegisterTests: XCTestCase {
         let atom = a.state
         XCTAssertNotNil(atom)
         XCTAssertEqual(atom.value, a.value)
+        XCTAssertEqual(atom.id, a.selfId)
         // print(a)
         // Optional(CRDT.LWWRegister<Swift.String, Swift.Int>(entry:
         //   CRDT.LWWRegister<Swift.String, Swift.Int>.Atom(value: 1, timestamp: 682813891.2279, id: "91DEB4F9-6A4D-4237-B78E-9A84C286C957"),
@@ -90,9 +91,22 @@ final class LWWRegisterTests: XCTestCase {
         XCTAssertEqual(a_delta[0], a.state)
     }
 
-    func testDeltaState_mergeDelta() {
+    func testDeltaState_mergeDeltas() {
+        // equiv direct merge
         // let c = a.merged(with: b)
         let c = a.mergeDelta([b.state])
+        XCTAssertEqual(c.value, b.value)
+    }
+
+    func testDeltaState_mergeEmptyDeltas() {
+        let c = a.mergeDelta([])
+        XCTAssertEqual(c.value, a.value)
+    }
+
+    func testDeltaState_mergeDelta() {
+        // equiv direct merge
+        // let c = a.merged(with: b)
+        let c = a.mergeDelta(b.state)
         XCTAssertEqual(c.value, b.value)
     }
 }
