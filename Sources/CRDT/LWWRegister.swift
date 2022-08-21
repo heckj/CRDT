@@ -21,15 +21,11 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
             self.id = id
         }
 
+        // MARK: Conformance of LWWRegister.Atom to PartiallyOrderable
+
         public static func <= (lhs: LWWRegister<ActorID, T>.Atom, rhs: LWWRegister<ActorID, T>.Atom) -> Bool {
             // functionally equivalent to say rhs instance is ordered after lhs instance
             (lhs.timestamp, lhs.id) <= (rhs.timestamp, rhs.id)
-        }
-
-        // not using Comparable because that requires T to be 'comparable' as well, but we want to be able to assert
-        // partial ordering here
-        func isOrdered(after other: Atom) -> Bool {
-            (timestamp, id) > (other.timestamp, other.id)
         }
     }
 
@@ -53,10 +49,9 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
 
 extension LWWRegister: Replicable {
     public func merged(with other: LWWRegister) -> LWWRegister {
-        // ternary operator:
+        // ternary operator, since I can never entirely remember the sequence:
         // expression ? valueIfTrue : valueIfFalse
         entry <= other.entry ? other : self
-//        entry.isOrdered(after: other.entry) ? self : other
     }
 }
 
