@@ -20,6 +20,10 @@ public protocol DeltaCRDT: Replicable {
 
     var delta: Delta? { get }
 
+    // Do we want something that provides a list of atoms for this CRDT
+    // func atoms() -› [LogEncodable]
+    //  - the atoms need to be identifiable, codable, and they need to be comparable
+
     /// Merges the given delta into the state of this data type instance.
     ///
     /// - Parameter delta: The incremental, partial state to merge.

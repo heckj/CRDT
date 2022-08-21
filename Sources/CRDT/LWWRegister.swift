@@ -7,7 +7,8 @@
 
 import Foundation
 /// Implements Last-Writer-Wins Register
-/// Based on Convergent and commutative replicated data types by M Shapiro, N Preguiça, C Baquero, M Zawirski - 2011 - hal.inria.fr
+/// Based on LWWRegister implementation as described in "Convergent and Commutative Replicated Data Types"
+/// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct LWWRegister<ActorID: Hashable & Comparable, T> {
     fileprivate struct Entry: Identifiable {
         var value: T
@@ -20,6 +21,8 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
             self.id = id
         }
 
+        // not using Comparable because that requires T to be 'comparable' as well, but we want to be able to assert
+        // partial ordering here
         func isOrdered(after other: Entry) -> Bool {
             (timestamp, id) > (other.timestamp, other.id)
         }
