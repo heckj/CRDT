@@ -6,13 +6,13 @@
 import XCTest
 
 final class LWWRegisterTests: XCTestCase {
-    var a: LWWRegister<Int>!
-    var b: LWWRegister<Int>!
+    var a: LWWRegister<String, Int>!
+    var b: LWWRegister<String, Int>!
 
     override func setUp() {
         super.setUp()
-        a = .init(1)
-        b = .init(2)
+        a = .init(1, actorID: UUID().uuidString)
+        b = .init(2, actorID: UUID().uuidString)
     }
 
     func testInitialCreation() {
@@ -52,7 +52,7 @@ final class LWWRegisterTests: XCTestCase {
     }
 
     func testAssociativity() {
-        let c: LWWRegister<Int> = .init(3)
+        let c: LWWRegister<String, Int> = .init(3, actorID: UUID().uuidString)
         let e = a.merged(with: b).merged(with: c)
         let f = a.merged(with: b.merged(with: c))
         XCTAssertEqual(e.value, f.value)
@@ -60,7 +60,7 @@ final class LWWRegisterTests: XCTestCase {
 
     func testCodable() {
         let data = try! JSONEncoder().encode(a)
-        let d = try! JSONDecoder().decode(LWWRegister<Int>.self, from: data)
+        let d = try! JSONDecoder().decode(LWWRegister<String, Int>.self, from: data)
         XCTAssertEqual(a, d)
     }
 }
