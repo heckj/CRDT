@@ -46,7 +46,7 @@ public protocol DeltaCRDT: Replicable {
     /// Merges the given delta into the state of this data type instance.
     ///
     /// - Parameter delta: The incremental, partial state to merge.
-    mutating func mergeDelta(_ delta: [Delta])
+    func mergeDelta(_ delta: [Delta]) -> Self
 }
 
 extension DeltaCRDT {
@@ -55,8 +55,6 @@ extension DeltaCRDT {
     /// - Parameter delta: The incremental, partial state to merge.
     /// - Returns: A new data type instance with the merged state of this data type instance and `delta`.
     func mergingDelta(_ delta: Delta) -> Self {
-        var result = self
-        result.mergeDelta([delta])
-        return result
+        mergeDelta([delta])
     }
 }
