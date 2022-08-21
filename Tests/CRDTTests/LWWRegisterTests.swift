@@ -63,4 +63,36 @@ final class LWWRegisterTests: XCTestCase {
         let d = try! JSONDecoder().decode(LWWRegister<String, Int>.self, from: data)
         XCTAssertEqual(a, d)
     }
+
+    func testDeltaState_state() {
+        let atom = a.state
+        XCTAssertNotNil(atom)
+        XCTAssertEqual(atom.value, a.value)
+        // print(a)
+        // Optional(CRDT.LWWRegister<Swift.String, Swift.Int>(entry:
+        //   CRDT.LWWRegister<Swift.String, Swift.Int>.Atom(value: 1, timestamp: 682813891.2279, id: "91DEB4F9-6A4D-4237-B78E-9A84C286C957"),
+        //   selfId: "91DEB4F9-6A4D-4237-B78E-9A84C286C957")
+        // )
+    }
+
+    func testDeltaState_delta() {
+        let a_nil_delta = a.delta(nil)
+        print(a_nil_delta)
+        XCTAssertNotNil(a_nil_delta)
+        XCTAssertEqual(a_nil_delta.count, 1)
+        XCTAssertEqual(a_nil_delta[0].value, 1)
+        XCTAssertEqual(a_nil_delta[0], a.state)
+
+        let a_delta = a.delta(b.state)
+        XCTAssertNotNil(a_delta)
+        XCTAssertEqual(a_delta.count, 1)
+        XCTAssertEqual(a_delta[0].value, 1)
+        XCTAssertEqual(a_delta[0], a.state)
+    }
+
+    func testDeltaState_mergeDelta() {
+        // let c = a.merged(with: b)
+        let c = a.mergeDelta([b.state])
+        XCTAssertEqual(c.value, b.value)
+    }
 }

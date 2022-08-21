@@ -66,10 +66,12 @@ extension LWWRegister: DeltaCRDT {
         [entry]
     }
 
-    public mutating func mergeDelta(_ delta: [Atom]) {
+    public func mergeDelta(_ delta: [Atom]) -> Self {
+        var newLWW = self
         if let lastDelta = delta.last {
-            entry = entry <= lastDelta ? lastDelta : entry
+            newLWW.entry = entry <= lastDelta ? lastDelta : entry
         }
+        return newLWW
     }
 }
 
