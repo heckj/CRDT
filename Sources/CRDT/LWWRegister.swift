@@ -8,36 +8,38 @@
 import Foundation
 /// Implements Last-Writer-Wins Register
 /// Based on Convergent and commutative replicated data types by M Shapiro, N Preguiça, C Baquero, M Zawirski - 2011 - hal.inria.fr
-public struct LWWRegister<T> {
+public struct LWWRegister<ActorID: Hashable & Comparable, T> {
     fileprivate struct Entry: Identifiable {
         var value: T
         var timestamp: TimeInterval
-        var id: UUID
+        var id: ActorID
 
-        init(value: T, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate, id: UUID = UUID()) {
+        init(value: T, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
             self.value = value
             self.timestamp = timestamp
             self.id = id
         }
 
         func isOrdered(after other: Entry) -> Bool {
-            (timestamp, id.uuidString) > (other.timestamp, other.id.uuidString)
+            (timestamp, id) > (other.timestamp, other.id)
         }
     }
 
     private var entry: Entry
+    private var selfId: ActorID
 
     public var value: T {
         get {
             entry.value
         }
         set {
-            entry = Entry(value: newValue)
+            entry = Entry(value: newValue, id: selfId)
         }
     }
 
-    public init(_ value: T) {
-        entry = Entry(value: value)
+    public init(_ value: T, actorID: ActorID) {
+        selfId = actorID
+        entry = Entry(value: value, id: selfId)
     }
 }
 
@@ -47,9 +49,9 @@ extension LWWRegister: Replicable {
     }
 }
 
-extension LWWRegister: Codable where T: Codable {}
+extension LWWRegister: Codable where T: Codable, ActorID: Codable {}
 
-extension LWWRegister.Entry: Codable where T: Codable {}
+extension LWWRegister.Entry: Codable where T: Codable, ActorID: Codable {}
 
 extension LWWRegister: Equatable where T: Equatable {}
 
