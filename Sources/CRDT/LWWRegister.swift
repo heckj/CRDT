@@ -10,7 +10,7 @@ import Foundation
 /// Based on LWWRegister implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct LWWRegister<ActorID: Hashable & Comparable, T> {
-    fileprivate struct Entry: Identifiable {
+    fileprivate struct Entry: Identifiable, PartiallyOrderable {
         var value: T
         var timestamp: TimeInterval
         var id: ActorID
@@ -19,6 +19,11 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
             self.value = value
             self.timestamp = timestamp
             self.id = id
+        }
+
+        static func <= (lhs: LWWRegister<ActorID, T>.Entry, rhs: LWWRegister<ActorID, T>.Entry) -> Bool {
+            // functionally equivalent to say rhs instance is ordered after lhs instance
+            (lhs.timestamp, lhs.id) <= (rhs.timestamp, rhs.id)
         }
 
         // not using Comparable because that requires T to be 'comparable' as well, but we want to be able to assert
@@ -48,7 +53,10 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
 
 extension LWWRegister: Replicable {
     public func merged(with other: LWWRegister) -> LWWRegister {
-        entry.isOrdered(after: other.entry) ? self : other
+        // ternary operator:
+        // expression ? valueIfTrue : valueIfFalse
+        entry <= other.entry ? other : self
+//        entry.isOrdered(after: other.entry) ? self : other
     }
 }
 
