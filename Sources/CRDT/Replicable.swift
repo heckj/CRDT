@@ -33,7 +33,7 @@ public protocol PartiallyOrderable {
 /// - SeeAlso: [Delta State Replicated Data Types](https://arxiv.org/abs/1603.01529)
 /// - SeeAlso: [Efficient Synchronization of State-based CRDTs](https://arxiv.org/pdf/1803.02750.pdf)
 public protocol DeltaCRDT: Replicable {
-    associatedtype DeltaState: PartiallyOrderable
+    associatedtype DeltaState
     associatedtype Delta: PartiallyOrderable, Identifiable
 
     var state: DeltaState { get }
