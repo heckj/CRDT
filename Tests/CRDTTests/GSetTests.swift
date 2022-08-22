@@ -17,7 +17,8 @@ final class GSetTests: XCTestCase {
 
     func testInitialCreation() {
         XCTAssertEqual(a.values.count, 0)
-        XCTAssertEqual(a.selfId, "a")
+        XCTAssertEqual(a.currentTimestamp.actorId, "a")
+        XCTAssertEqual(a.currentTimestamp.clock, 0)
     }
 
     func testSettingValue() {
@@ -61,11 +62,9 @@ final class GSetTests: XCTestCase {
     }
 
     func testDeltaState_state() {
-        let atom = a.state
-        XCTAssertNotNil(atom)
-        XCTAssertEqual(atom.values, a.values)
-        XCTAssertNotNil(atom.id)
-        XCTAssertEqual(atom.clockId.actorId, a.selfId)
+        let state = a.state
+        XCTAssertNotNil(state)
+        XCTAssertEqual(state.values, a.values)
     }
 
     func testDeltaState_delta() {
@@ -74,19 +73,18 @@ final class GSetTests: XCTestCase {
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.count, 1)
         XCTAssertEqual(a_nil_delta[0].values, [])
-        XCTAssertEqual(a_nil_delta[0], a.state)
 
         let a_delta = a.delta(b.state)
         XCTAssertNotNil(a_delta)
         XCTAssertEqual(a_delta.count, 1)
         XCTAssertEqual(a_delta[0].values, [])
-        XCTAssertEqual(a_delta[0], a.state)
     }
 
     func testDeltaState_mergeDeltas() {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let c = a.mergeDelta([b.state])
+        let delta = b.delta(a.state)
+        let c = a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
 
@@ -98,7 +96,8 @@ final class GSetTests: XCTestCase {
     func testDeltaState_mergeDelta() {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let c = a.mergeDelta(b.state)
+        let delta = b.delta(a.state)
+        let c = a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
 }

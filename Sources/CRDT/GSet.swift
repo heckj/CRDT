@@ -8,57 +8,34 @@ import Foundation
 /// Based on GSet implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
-    /// The replicated state structure for LWWRegister
-    public struct Atom: Identifiable, PartiallyOrderable {
-        internal var values: Set<T>
-        internal var clockId: LamportTimestamp<ActorID>
 
-        /// The identity of the counter metadata (atom) computed from the actor Id and a current timestamp.
-        public var id: String {
-            clockId.id
-        }
-
-        init(values: Set<T>, id: ActorID, clock: UInt64 = 0) {
-            self.values = values
-            clockId = LamportTimestamp(clock: clock, actorId: id)
-        }
-
-        // MARK: Conformance of LWWRegister.Atom to PartiallyOrderable
-
-        public static func <= (lhs: Self, rhs: Self) -> Bool {
-            // functionally equivalent to say rhs instance is ordered after lhs instance
-            // print("lhs \(lhs.timestamp), \(lhs.id) <=? rhs \(rhs.timestamp), \(rhs.id)")
-            lhs.clockId <= rhs.clockId
-        }
-    }
-
-    private var _storage: Atom
-    internal let selfId: ActorID
+    private var _storage: Set<T>
+    internal var currentTimestamp: LamportTimestamp<ActorID>
 
     public var values: Set<T> {
         get {
-            _storage.values
+            _storage
         }
     }
 
     public var count: Int {
         get {
-            _storage.values.count
+            _storage.count
         }
     }
 
     public mutating func insert(_ value: T) {
-        self._storage.values.insert(value)
-        self._storage.clockId.tick()
+        self._storage.insert(value)
+        self.currentTimestamp.tick()
     }
     
     public func contains(_ value: T) -> Bool {
-        _storage.values.contains(value)
+        _storage.contains(value)
     }
 
     public init(actorId: ActorID, clock: UInt64 = 0) {
-        self.selfId = actorId
-        self._storage = Atom(values: Set<T>(), id: actorId, clock: clock)
+        self.currentTimestamp = LamportTimestamp(clock: clock, actorId: actorId)
+        self._storage = Set<T>()
     }
     
     public init(actorId: ActorID, _ elements: [T]) {
@@ -71,10 +48,9 @@ extension GSet: Replicable {
     public func merged(with other: GSet) -> GSet {
         var copy = self
         // Merging two grow-only sets is (conveniently) the union of the two sets
-        copy._storage.values = _storage.values.union(other._storage.values)
+        copy._storage = _storage.union(other._storage)
         // The clock isn't used for ordering or merging, so updating it isn't strictly needed.
-        copy._storage.clockId.clock = max(_storage.clockId.clock, other._storage.clockId.clock)
-        copy._storage.clockId.tick()
+        copy.currentTimestamp.clock = max(currentTimestamp.clock, other.currentTimestamp.clock)
         return copy
     }
 }
@@ -82,53 +58,93 @@ extension GSet: Replicable {
 extension GSet: DeltaCRDT {
 //    public typealias DeltaState = Self.Atom
 //    public typealias Delta = Self.Atom
-    public var state: Atom {
-        _storage
+//    associatedtype DeltaState: PartiallyOrderable
+//    associatedtype Delta: PartiallyOrderable, Identifiable
+
+    public struct GSetState {
+        let values: Set<T>
+    }
+    
+    public struct GSetDelta: Identifiable, PartiallyOrderable {
+        let lamportClock: LamportTimestamp<ActorID>
+        let values: Set<T>
+
+        public var id: String {
+            lamportClock.id
+        }
+
+        public static func <= (lhs: GSet<ActorID, T>.GSetDelta, rhs: GSet<ActorID, T>.GSetDelta) -> Bool {
+            lhs.lamportClock <= rhs.lamportClock
+        }
+    }
+    // var state: DeltaState { get }
+    public var state: GSetState {
+        GSetState(values: _storage)
     }
 
-    public func delta(_: Atom?) -> [Atom] {
-        [_storage]
+    //func delta(_ state: DeltaState?) -> [Delta]
+    public func delta(_ otherState: GSetState?) -> [GSetDelta] {
+        if let otherState = otherState {
+            var diff = _storage
+            for val in _storage.intersection(otherState.values) {
+                diff.remove(val)
+            }
+            return [GSetDelta(lamportClock: self.currentTimestamp, values: diff)]
+        } else {
+            return [GSetDelta(lamportClock: self.currentTimestamp, values: _storage)]
+        }
     }
 
-    public func mergeDelta(_ delta: [Atom]) -> Self {
+    //func mergeDelta(_ delta: [Delta]) -> Self
+    public func mergeDelta(_ delta: [GSetDelta]) -> Self {
         var copy = self
         // Merging two grow-only sets is (conveniently) the union of the two sets
-        let reducedSet = delta.reduce(into: Set<T>(self._storage.values)) { partialResult, atom in
-            partialResult = partialResult.union(atom.values)
+        let reducedSet = delta.reduce(into: Set<T>(self.values)) { partialResult, delta in
+            partialResult = partialResult.union(delta.values)
         }
-        copy._storage.values = reducedSet
+        copy._storage = reducedSet
         // The clock isn't used for ordering or merging, so updating it isn't strictly needed.
-        let maxClock = delta.reduce(into: 0) { partialResult, atom in
-            partialResult = max(partialResult, atom.clockId.clock)
+        let maxClock = delta.reduce(into: 0) { partialResult, delta in
+            partialResult = max(partialResult, delta.lamportClock.clock)
         }
-        copy._storage.clockId.clock = maxClock
-        copy._storage.clockId.tick()
+        copy.currentTimestamp.clock = maxClock
         return copy
     }
 }
 
 extension GSet: Codable where T: Codable, ActorID: Codable {}
 
-extension GSet.Atom: Codable where T: Codable, ActorID: Codable {}
+extension GSet.GSetState: Codable where T: Codable, ActorID: Codable {}
 
 extension GSet: Equatable where T: Equatable {}
 
-extension GSet.Atom: Equatable where T: Equatable {}
+extension GSet.GSetState: Equatable where T: Equatable {}
 
 extension GSet: Hashable where T: Hashable {}
 
-extension GSet.Atom: Hashable where T: Hashable {}
+extension GSet.GSetState: Hashable where T: Hashable {}
 
 #if DEBUG
     extension GSet: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            _storage.sizeInBytes() + MemoryLayout<ActorID>.size(ofValue: selfId)
+            let setSize = _storage.capacity * MemoryLayout<T>.size
+            return setSize + currentTimestamp.sizeInBytes()
         }
     }
 
-    extension GSet.Atom: ApproxSizeable {
+    extension GSet.GSetState: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            clockId.sizeInBytes() + (MemoryLayout<T>.size * values.capacity)
+            (MemoryLayout<T>.size * values.capacity)
         }
     }
+
+    extension GSet.GSetDelta: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            let setSize = values.reduce(into: 0) { partialResult, someTVal in
+                partialResult += MemoryLayout<T>.size(ofValue: someTVal)
+            }
+            return setSize + lamportClock.sizeInBytes()
+        }
+    }
+
 #endif
