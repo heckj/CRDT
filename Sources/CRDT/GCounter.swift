@@ -8,10 +8,10 @@ import Foundation
 /// Based on GCounter implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct GCounter<ActorID: Hashable & Comparable> {
-    /// The replicated state structure for LWWRegister
+    /// The replicated state structure for GCounter
     public struct Atom: Identifiable, PartiallyOrderable {
-        var value: UInt
-        var timestamp: TimeInterval
+        internal var value: UInt
+        internal var timestamp: TimeInterval
         public var id: ActorID
 
         init(value: UInt, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
@@ -21,7 +21,8 @@ public struct GCounter<ActorID: Hashable & Comparable> {
         }
 
         // Note: this particular CRDT implementation doesn't rely on partial order of updates,
-        // so this additional constraint (and implementation) could be dropped.
+        // so this additional constraint (and implementation) could be dropped - but then we'd have
+        // to have a looser definition of delta-CRDT.
 
         // MARK: Conformance of LWWRegister.Atom to PartiallyOrderable
 
