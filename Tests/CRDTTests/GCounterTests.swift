@@ -11,7 +11,7 @@ final class GCounterTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        a = .init(1, actorID: UUID().uuidString)
+        a = .init(1, actorID: UUID().uuidString, timestamp: Date().timeIntervalSinceReferenceDate - 1.0)
         b = .init(2, actorID: UUID().uuidString)
     }
 
@@ -79,7 +79,7 @@ final class GCounterTests: XCTestCase {
 
     func testDeltaState_delta() {
         let a_nil_delta = a.delta(nil)
-        print(a_nil_delta)
+        // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.count, 1)
         XCTAssertEqual(a_nil_delta[0].value, 1)

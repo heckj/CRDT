@@ -44,9 +44,13 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
         }
     }
 
-    public init(_ value: T, actorID: ActorID) {
+    public init(_ value: T, actorID: ActorID, timestamp: TimeInterval? = nil) {
         selfId = actorID
-        entry = Atom(value: value, id: selfId)
+        if let timestamp {
+            entry = Atom(value: value, id: selfId, timestamp: timestamp)
+        } else {
+            entry = Atom(value: value, id: selfId)
+        }
     }
 }
 
