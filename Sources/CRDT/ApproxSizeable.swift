@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Joseph Heck on 8/22/22.
+//  ApproxSizeable.swift
 //
 
 import Foundation

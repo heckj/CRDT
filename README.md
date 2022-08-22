@@ -10,9 +10,8 @@ This library implements well-known state-based CRDTs as swift generics, and supp
 
 - [x] LWW-Register (last write wins register)
 - [x] G-Counter (grow-only counter)
-- [ ] PN-Counter (A positive-negative counter)
+- [x] PN-Counter (A positive-negative counter)
 - [ ] G-Set (grow-only set)
-- [ ] 2P-Set (two phase set)
 - [ ] LWW-Set (last write wins set, biased towards add)
 - [ ] OR-Set (observed-remove set)
 - [ ] Replicator
