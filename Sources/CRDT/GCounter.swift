@@ -101,3 +101,17 @@ extension GCounter.Atom: Equatable {}
 extension GCounter: Hashable {}
 
 extension GCounter.Atom: Hashable {}
+
+#if DEBUG
+    extension GCounter: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            _storage.sizeInBytes() + MemoryLayout<ActorID>.size(ofValue: selfId)
+        }
+    }
+
+    extension GCounter.Atom: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            clockId.sizeInBytes() + MemoryLayout<UInt>.size(ofValue: value)
+        }
+    }
+#endif

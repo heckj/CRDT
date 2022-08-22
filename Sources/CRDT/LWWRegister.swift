@@ -96,3 +96,17 @@ extension LWWRegister.Atom: Equatable where T: Equatable {}
 extension LWWRegister: Hashable where T: Hashable {}
 
 extension LWWRegister.Atom: Hashable where T: Hashable {}
+
+#if DEBUG
+    extension LWWRegister: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            _storage.sizeInBytes() + MemoryLayout<ActorID>.size(ofValue: selfId)
+        }
+    }
+
+    extension LWWRegister.Atom: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            clockId.sizeInBytes() + MemoryLayout<T>.size(ofValue: value)
+        }
+    }
+#endif

@@ -28,3 +28,11 @@ extension LamportTimestamp: Equatable {}
 extension LamportTimestamp: Hashable {}
 
 extension LamportTimestamp: PartiallyOrderable {}
+
+#if DEBUG
+    extension LamportTimestamp: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            MemoryLayout<UInt64>.size(ofValue: clock) + MemoryLayout<ActorID>.size(ofValue: actorId)
+        }
+    }
+#endif
