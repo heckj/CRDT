@@ -19,6 +19,11 @@ public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Co
     public static func < (lhs: LamportTimestamp, rhs: LamportTimestamp) -> Bool {
         (lhs.clock, lhs.id) < (rhs.clock, rhs.id)
     }
+    
+    public init(clock: UInt64 = 0, actorId: ActorID) {
+        self.clock = clock
+        self.actorId = actorId
+    }
 }
 
 extension LamportTimestamp: Codable where ActorID: Codable {}
