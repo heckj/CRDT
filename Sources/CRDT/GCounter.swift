@@ -45,7 +45,7 @@ public struct GCounter<ActorID: Hashable & Comparable, T: BinaryInteger> {
 
     public init(_ value: T, actorID: ActorID, timestamp: TimeInterval? = nil) {
         selfId = actorID
-        if let timestamp {
+        if let timestamp = timestamp {
             _storage = Atom(value: value, id: selfId, timestamp: timestamp)
         } else {
             _storage = Atom(value: value, id: selfId)
