@@ -68,12 +68,8 @@ final class LWWRegisterTests: XCTestCase {
         let atom = a.state
         XCTAssertNotNil(atom)
         XCTAssertEqual(atom.value, a.value)
-        XCTAssertEqual(atom.id, a.selfId)
-        // print(a)
-        // Optional(CRDT.LWWRegister<Swift.String, Swift.Int>(_storage:
-        //   CRDT.LWWRegister<Swift.String, Swift.Int>.Atom(value: 1, timestamp: 682813891.2279, id: "91DEB4F9-6A4D-4237-B78E-9A84C286C957"),
-        //   selfId: "91DEB4F9-6A4D-4237-B78E-9A84C286C957")
-        // )
+        XCTAssertNotNil(atom.id)
+        XCTAssertEqual(atom.clockId.actorId, a.selfId)
     }
 
     func testDeltaState_delta() {
