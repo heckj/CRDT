@@ -2,9 +2,15 @@
 //  LamportTimestamp.swift
 //
 
+/// A lamport timestamp for a specific actor.
 public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
     internal var clock: UInt64 = 0
-    public var id: ActorID
+    internal var actorId: ActorID
+
+    /// The identity of the counter metadata (atom) computed from the actor Id and the lamport timestamp.
+    public var id: String {
+        "\(clock)-\(actorId)"
+    }
 
     public mutating func tick() {
         clock += 1

@@ -10,14 +10,17 @@ import Foundation
 public struct GCounter<ActorID: Hashable & Comparable> {
     /// The replicated state structure for GCounter
     public struct Atom: Identifiable, PartiallyOrderable {
+        internal var clockId: WallclockTimestamp<ActorID>
         internal var value: UInt
-        internal var timestamp: TimeInterval
-        public var id: ActorID
 
-        init(value: UInt, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
+        /// The identity of the counter metadata (atom) computed from the actor Id and a current timestamp.
+        public var id: String {
+            clockId.id
+        }
+
+        internal init(value: UInt, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
             self.value = value
-            self.timestamp = timestamp
-            self.id = id
+            clockId = WallclockTimestamp(actorId: id, timestamp: timestamp)
         }
 
         // Note: this particular CRDT implementation doesn't rely on partial order of updates,
@@ -28,7 +31,7 @@ public struct GCounter<ActorID: Hashable & Comparable> {
 
         public static func <= (lhs: Self, rhs: Self) -> Bool {
             // functionally equivalent to say rhs instance is ordered after lhs instance
-            (lhs.timestamp, lhs.id) <= (rhs.timestamp, rhs.id)
+            lhs.clockId <= rhs.clockId
         }
     }
 

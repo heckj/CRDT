@@ -12,14 +12,16 @@ public struct PNCounter<ActorID: Hashable & Comparable> {
     public struct Atom: Identifiable, PartiallyOrderable {
         internal var pos_value: UInt
         internal var neg_value: UInt
-        internal var timestamp: TimeInterval
-        public var id: ActorID
+        internal var clockId: WallclockTimestamp<ActorID>
+        /// The identity of the counter metadata (atom) computed from the actor Id and a current timestamp.
+        public var id: String {
+            clockId.id
+        }
 
         init(pos: UInt, neg: UInt, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
             pos_value = pos
             neg_value = neg
-            self.timestamp = timestamp
-            self.id = id
+            clockId = WallclockTimestamp(actorId: id, timestamp: timestamp)
         }
 
         // Note: this particular CRDT implementation doesn't rely on partial order of updates,
@@ -30,7 +32,7 @@ public struct PNCounter<ActorID: Hashable & Comparable> {
 
         public static func <= (lhs: Self, rhs: Self) -> Bool {
             // functionally equivalent to say rhs instance is ordered after lhs instance
-            (lhs.timestamp, lhs.id) <= (rhs.timestamp, rhs.id)
+            lhs.clockId <= rhs.clockId
         }
     }
 
