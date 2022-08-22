@@ -124,3 +124,17 @@ extension PNCounter.Atom: Equatable {}
 extension PNCounter: Hashable {}
 
 extension PNCounter.Atom: Hashable {}
+
+#if DEBUG
+    extension PNCounter: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            _storage.sizeInBytes() + MemoryLayout<ActorID>.size(ofValue: selfId)
+        }
+    }
+
+    extension PNCounter.Atom: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            clockId.sizeInBytes() + 2 * MemoryLayout<UInt>.size(ofValue: pos_value)
+        }
+    }
+#endif

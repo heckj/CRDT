@@ -31,3 +31,11 @@ extension WallclockTimestamp: Equatable {}
 extension WallclockTimestamp: Hashable {}
 
 extension WallclockTimestamp: PartiallyOrderable {}
+
+#if DEBUG
+    extension WallclockTimestamp: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            MemoryLayout<TimeInterval>.size(ofValue: clock) + MemoryLayout<ActorID>.size(ofValue: actorId)
+        }
+    }
+#endif
