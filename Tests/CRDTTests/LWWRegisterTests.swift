@@ -11,7 +11,7 @@ final class LWWRegisterTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        a = .init(1, actorID: UUID().uuidString)
+        a = .init(1, actorID: UUID().uuidString, timestamp: Date().timeIntervalSinceReferenceDate - 1.0)
         b = .init(2, actorID: UUID().uuidString)
     }
 
@@ -27,7 +27,6 @@ final class LWWRegisterTests: XCTestCase {
     }
 
     func testMergeOfInitiallyUnrelated() {
-        b = .init(2, actorID: UUID().uuidString)
         let c = a.merged(with: b)
         XCTAssertEqual(c.value, b.value)
     }
@@ -79,7 +78,7 @@ final class LWWRegisterTests: XCTestCase {
 
     func testDeltaState_delta() {
         let a_nil_delta = a.delta(nil)
-        print(a_nil_delta)
+        // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.count, 1)
         XCTAssertEqual(a_nil_delta[0].value, 1)
@@ -95,7 +94,6 @@ final class LWWRegisterTests: XCTestCase {
     func testDeltaState_mergeDeltas() {
         // equiv direct merge
         // let c = a.merged(with: b)
-        b = .init(2, actorID: UUID().uuidString)
         let c = a.mergeDelta([b.state])
         XCTAssertEqual(c.value, b.value)
     }
@@ -108,7 +106,6 @@ final class LWWRegisterTests: XCTestCase {
     func testDeltaState_mergeDelta() {
         // equiv direct merge
         // let c = a.merged(with: b)
-        b = .init(2, actorID: UUID().uuidString)
         let c = a.mergeDelta(b.state)
         XCTAssertEqual(c.value, b.value)
     }
