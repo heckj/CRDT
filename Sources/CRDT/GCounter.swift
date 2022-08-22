@@ -7,14 +7,14 @@ import Foundation
 /// Implements a Grow-only Counter
 /// Based on GCounter implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct GCounter<ActorID: Hashable & Comparable, T: BinaryInteger> {
+public struct GCounter<ActorID: Hashable & Comparable> {
     /// The replicated state structure for LWWRegister
     public struct Atom: Identifiable, PartiallyOrderable {
-        var value: T
+        var value: UInt
         var timestamp: TimeInterval
         public var id: ActorID
 
-        init(value: T, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
+        init(value: UInt, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
             self.value = value
             self.timestamp = timestamp
             self.id = id
@@ -34,16 +34,18 @@ public struct GCounter<ActorID: Hashable & Comparable, T: BinaryInteger> {
     private var _storage: Atom
     internal let selfId: ActorID
 
-    public var value: T {
+    public var value: UInt {
         _storage.value
     }
 
     public mutating func increment() {
-        let newAtom = Atom(value: _storage.value + T(1), id: selfId)
-        _storage = newAtom
+        if _storage.value != UInt.max {
+            let newAtom = Atom(value: _storage.value + 1, id: selfId)
+            _storage = newAtom
+        }
     }
 
-    public init(_ value: T, actorID: ActorID, timestamp: TimeInterval? = nil) {
+    public init(_ value: UInt = 0, actorID: ActorID, timestamp: TimeInterval? = nil) {
         selfId = actorID
         if let timestamp = timestamp {
             _storage = Atom(value: value, id: selfId, timestamp: timestamp)
@@ -76,7 +78,7 @@ extension GCounter: DeltaCRDT {
         var copy = self
         var withLocalValue = delta
         withLocalValue.append(_storage)
-        let maxValue = withLocalValue.reduce(into: T(0)) { partialResult, atom in
+        let maxValue = withLocalValue.reduce(into: 0) { partialResult, atom in
             partialResult = max(partialResult, atom.value)
         }
         copy._storage = Atom(value: maxValue, id: selfId)
@@ -84,14 +86,14 @@ extension GCounter: DeltaCRDT {
     }
 }
 
-extension GCounter: Codable where T: Codable, ActorID: Codable {}
+extension GCounter: Codable where ActorID: Codable {}
 
-extension GCounter.Atom: Codable where T: Codable, ActorID: Codable {}
+extension GCounter.Atom: Codable where ActorID: Codable {}
 
-extension GCounter: Equatable where T: Equatable {}
+extension GCounter: Equatable {}
 
-extension GCounter.Atom: Equatable where T: Equatable {}
+extension GCounter.Atom: Equatable {}
 
-extension GCounter: Hashable where T: Hashable {}
+extension GCounter: Hashable {}
 
-extension GCounter.Atom: Hashable where T: Hashable {}
+extension GCounter.Atom: Hashable {}

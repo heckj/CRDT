@@ -1,13 +1,13 @@
 //
-//  GCounterTests.swift
+//  PNCounterTests.swift
 //
 
 @testable import CRDT
 import XCTest
 
-final class GCounterTests: XCTestCase {
-    var a: GCounter<String>!
-    var b: GCounter<String>!
+final class PNCounterTests: XCTestCase {
+    var a: PNCounter<String>!
+    var b: PNCounter<String>!
 
     override func setUp() {
         super.setUp()
@@ -26,10 +26,26 @@ final class GCounterTests: XCTestCase {
         XCTAssertEqual(a.value, 3)
     }
 
+    func testDecrementingValue() {
+        a.decrement()
+        XCTAssertEqual(a.value, 0)
+        a.decrement()
+        XCTAssertEqual(a.value, -1)
+        // internals:
+        XCTAssertEqual(a.state.pos_value, 1)
+        XCTAssertEqual(a.state.neg_value, 2)
+    }
+
     func testIncrementOverflow() {
-        var x = GCounter(UInt.max, actorID: UUID().uuidString)
+        var x = PNCounter(Int.max, actorID: UUID().uuidString)
         x.increment()
-        XCTAssertEqual(x.value, UInt.max)
+        XCTAssertEqual(x.value, Int.max)
+    }
+
+    func testDecrementOverflow() {
+        var x = PNCounter(Int.min, actorID: UUID().uuidString)
+        x.decrement()
+        XCTAssertEqual(x.value, Int.min + 1)
     }
 
     func testMergeOfInitiallyUnrelated() {
@@ -59,7 +75,7 @@ final class GCounterTests: XCTestCase {
     }
 
     func testAssociativity() {
-        let c: GCounter<String> = .init(3, actorID: UUID().uuidString)
+        let c: PNCounter<String> = .init(3, actorID: UUID().uuidString)
         let e = a.merged(with: b).merged(with: c)
         let f = a.merged(with: b.merged(with: c))
         XCTAssertEqual(e.value, f.value)
@@ -67,14 +83,14 @@ final class GCounterTests: XCTestCase {
 
     func testCodable() {
         let data = try! JSONEncoder().encode(a)
-        let d = try! JSONDecoder().decode(GCounter<String>.self, from: data)
+        let d = try! JSONDecoder().decode(PNCounter<String>.self, from: data)
         XCTAssertEqual(a, d)
     }
 
     func testDeltaState_state() {
         let atom = a.state
         XCTAssertNotNil(atom)
-        XCTAssertEqual(atom.value, a.value)
+        XCTAssertEqual(a.value, Int(atom.pos_value) - Int(atom.neg_value))
         XCTAssertEqual(atom.id, a.selfId)
         // print(a)
         // Optional(CRDT.LWWRegister<Swift.String, Swift.Int>(_storage:
@@ -88,13 +104,13 @@ final class GCounterTests: XCTestCase {
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.count, 1)
-        XCTAssertEqual(a_nil_delta[0].value, 1)
+        XCTAssertEqual(a_nil_delta[0].pos_value, 1)
         XCTAssertEqual(a_nil_delta[0], a.state)
 
         let a_delta = a.delta(b.state)
         XCTAssertNotNil(a_delta)
         XCTAssertEqual(a_delta.count, 1)
-        XCTAssertEqual(a_delta[0].value, 1)
+        XCTAssertEqual(a_delta[0].pos_value, 1)
         XCTAssertEqual(a_delta[0], a.state)
     }
 

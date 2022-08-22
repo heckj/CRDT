@@ -32,24 +32,24 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
         }
     }
 
-    private var entry: Atom
+    private var _storage: Atom
     internal let selfId: ActorID
 
     public var value: T {
         get {
-            entry.value
+            _storage.value
         }
         set {
-            entry = Atom(value: newValue, id: selfId)
+            _storage = Atom(value: newValue, id: selfId)
         }
     }
 
     public init(_ value: T, actorID: ActorID, timestamp: TimeInterval? = nil) {
         selfId = actorID
         if let timestamp = timestamp {
-            entry = Atom(value: value, id: selfId, timestamp: timestamp)
+            _storage = Atom(value: value, id: selfId, timestamp: timestamp)
         } else {
-            entry = Atom(value: value, id: selfId)
+            _storage = Atom(value: value, id: selfId)
         }
     }
 }
@@ -58,7 +58,7 @@ extension LWWRegister: Replicable {
     public func merged(with other: LWWRegister) -> LWWRegister {
         // ternary operator, since I can never entirely remember the sequence:
         // expression ? valueIfTrue : valueIfFalse
-        entry <= other.entry ? other : self
+        _storage <= other._storage ? other : self
     }
 }
 
@@ -66,17 +66,17 @@ extension LWWRegister: DeltaCRDT {
 //    public typealias DeltaState = Self.Atom
 //    public typealias Delta = Self.Atom
     public var state: Atom {
-        entry
+        _storage
     }
 
     public func delta(_: Atom?) -> [Atom] {
-        [entry]
+        [_storage]
     }
 
     public func mergeDelta(_ delta: [Atom]) -> Self {
         var newLWW = self
         if let lastDelta = delta.last {
-            newLWW.entry = entry <= lastDelta ? lastDelta : entry
+            newLWW._storage = _storage <= lastDelta ? lastDelta : _storage
         }
         return newLWW
     }
