@@ -70,7 +70,7 @@ final class LWWRegisterTests: XCTestCase {
         XCTAssertEqual(atom.value, a.value)
         XCTAssertEqual(atom.id, a.selfId)
         // print(a)
-        // Optional(CRDT.LWWRegister<Swift.String, Swift.Int>(entry:
+        // Optional(CRDT.LWWRegister<Swift.String, Swift.Int>(_storage:
         //   CRDT.LWWRegister<Swift.String, Swift.Int>.Atom(value: 1, timestamp: 682813891.2279, id: "91DEB4F9-6A4D-4237-B78E-9A84C286C957"),
         //   selfId: "91DEB4F9-6A4D-4237-B78E-9A84C286C957")
         // )
