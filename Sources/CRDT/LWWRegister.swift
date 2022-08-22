@@ -6,6 +6,7 @@
 // Source: https://github.com/appdecentral/replicatingtypes/blob/master/Sources/ReplicatingTypes/ReplicatingRegister.swift
 
 import Foundation
+
 /// Implements Last-Writer-Wins Register
 /// Based on LWWRegister implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
@@ -24,8 +25,9 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
 
         // MARK: Conformance of LWWRegister.Atom to PartiallyOrderable
 
-        public static func <= (lhs: LWWRegister<ActorID, T>.Atom, rhs: LWWRegister<ActorID, T>.Atom) -> Bool {
+        public static func <= (lhs: Self, rhs: Self) -> Bool {
             // functionally equivalent to say rhs instance is ordered after lhs instance
+            // print("lhs \(lhs.timestamp), \(lhs.id) <=? rhs \(rhs.timestamp), \(rhs.id)")
             (lhs.timestamp, lhs.id) <= (rhs.timestamp, rhs.id)
         }
     }

@@ -8,14 +8,14 @@ An implementation of ∂-state based CRDTs (conflict-free replicated data types)
 
 This library implements well-known state-based CRDTs as swift generics, and supplies a replicator to support using CRDTs in your own data models.
 
-- G-Counter (grow-only counter)
-- PN-Counter (A positive-negative counter)
-- LWW-Register (last write wins register)
-- G-Set (grow-only set)
-- 2P-Set (two phase set)
-- LWW-Set (last write wins set, biased towards add)
-- OR-Set (observed-remove set)
-
+-[x] LWW-Register (last write wins register)
+-[ ] G-Counter (grow-only counter)
+-[ ] PN-Counter (A positive-negative counter)
+-[ ] G-Set (grow-only set)
+-[ ] 2P-Set (two phase set)
+-[ ] LWW-Set (last write wins set, biased towards add)
+-[ ] OR-Set (observed-remove set)
+-[ ] Replicator
 
 For more, general, information on CRDTs, see the following sites and papers:
 - [CRDT.tech website](https://crdt.tech)
