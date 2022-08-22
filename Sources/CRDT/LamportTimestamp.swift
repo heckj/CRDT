@@ -3,15 +3,15 @@
 //
 
 public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
-    var count: UInt64 = 0
+    internal var clock: UInt64 = 0
     public var id: ActorID
 
     public mutating func tick() {
-        count += 1
+        clock += 1
     }
 
     public static func < (lhs: LamportTimestamp, rhs: LamportTimestamp) -> Bool {
-        (lhs.count, lhs.id) < (rhs.count, rhs.id)
+        (lhs.clock, lhs.id) < (rhs.clock, rhs.id)
     }
 }
 
