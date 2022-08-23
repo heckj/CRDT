@@ -68,7 +68,6 @@ final class LWWRegisterTests: XCTestCase {
         let atom = a.state
         XCTAssertNotNil(atom)
         XCTAssertEqual(atom.value, a.value)
-        XCTAssertNotNil(atom.id)
         XCTAssertEqual(atom.clockId.actorId, a.selfId)
     }
 

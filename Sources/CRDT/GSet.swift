@@ -33,8 +33,8 @@ public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
         _storage = Set<T>()
     }
 
-    public init(actorId: ActorID, _ elements: [T]) {
-        self = .init(actorId: actorId)
+    public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
+        self = .init(actorId: actorId, clock: clock)
         elements.forEach { self.insert($0) }
     }
 }
@@ -91,16 +91,16 @@ extension GSet: DeltaCRDT {
 }
 
 extension GSet: Codable where T: Codable, ActorID: Codable {}
-
 extension GSet.GSetState: Codable where T: Codable, ActorID: Codable {}
+extension GSet.GSetDelta: Codable where T: Codable, ActorID: Codable {}
 
 extension GSet: Equatable where T: Equatable {}
-
 extension GSet.GSetState: Equatable where T: Equatable {}
+extension GSet.GSetDelta: Equatable where T: Equatable {}
 
 extension GSet: Hashable where T: Hashable {}
-
 extension GSet.GSetState: Hashable where T: Hashable {}
+extension GSet.GSetDelta: Hashable where T: Hashable {}
 
 #if DEBUG
     extension GSet: ApproxSizeable {

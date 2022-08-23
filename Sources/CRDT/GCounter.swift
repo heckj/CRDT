@@ -52,9 +52,7 @@ extension GCounter: DeltaCRDT {
 }
 
 extension GCounter: Codable where ActorID: Codable {}
-
 extension GCounter: Equatable {}
-
 extension GCounter: Hashable {}
 
 #if DEBUG

@@ -2,10 +2,16 @@
 
 ## Topics
 
-### Creating a GCounter
+### Retrieving the current state of a CRDT
 
-- ``CRDT/DeltaCRDT/Delta``
-- ``CRDT/DeltaCRDT/DeltaState``
-- ``CRDT/DeltaCRDT/delta(_:)``
-- ``CRDT/DeltaCRDT/mergeDelta(_:)``
 - ``CRDT/DeltaCRDT/state``
+- ``CRDT/DeltaCRDT/DeltaState``
+
+### Computing the delta to replicate a CRDT
+
+- ``CRDT/DeltaCRDT/delta(_:)``
+- ``CRDT/DeltaCRDT/Delta``
+
+### Merging the delta to replicate a CRDT
+
+- ``CRDT/DeltaCRDT/mergeDelta(_:)``

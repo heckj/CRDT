@@ -13,7 +13,7 @@ import Foundation
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368)
 public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
-    public struct Metadata {
+    internal struct Metadata {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
 
@@ -26,13 +26,13 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
     internal var currentTimestamp: LamportTimestamp<ActorID>
     internal var metadataByValue: [T: Metadata]
 
-    public init(actorId: ActorID) {
+    public init(actorId: ActorID, clock: UInt64 = 0) {
         metadataByValue = .init()
-        currentTimestamp = .init(actorId: actorId)
+        currentTimestamp = .init(clock: clock, actorId: actorId)
     }
 
-    public init(actorId: ActorID, _ elements: [T]) {
-        self = .init(actorId: actorId)
+    public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
+        self = .init(actorId: actorId, clock: clock)
         elements.forEach { self.insert($0) }
     }
 
@@ -183,16 +183,19 @@ extension ORSet: DeltaCRDT {
 }
 
 extension ORSet: Codable where T: Codable, ActorID: Codable {}
-
 extension ORSet.Metadata: Codable where T: Codable, ActorID: Codable {}
+extension ORSet.ORSetState: Codable where T: Codable, ActorID: Codable {}
+extension ORSet.ORSetDelta: Codable where T: Codable, ActorID: Codable {}
 
 extension ORSet: Equatable where T: Equatable {}
-
 extension ORSet.Metadata: Equatable where T: Equatable {}
+extension ORSet.ORSetState: Equatable where T: Equatable {}
+extension ORSet.ORSetDelta: Equatable where T: Equatable {}
 
 extension ORSet: Hashable where T: Hashable {}
-
 extension ORSet.Metadata: Hashable where T: Hashable {}
+extension ORSet.ORSetState: Hashable where T: Hashable {}
+extension ORSet.ORSetDelta: Hashable where T: Hashable {}
 
 #if DEBUG
     extension ORSet.Metadata: ApproxSizeable {
