@@ -31,7 +31,7 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
         currentTimestamp = .init(actorId: actorId)
     }
 
-    public init(actorId: ActorID, array elements: [T]) {
+    public init(actorId: ActorID, _ elements: [T]) {
         self = .init(actorId: actorId)
         elements.forEach { self.insert($0) }
     }
