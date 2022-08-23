@@ -61,8 +61,7 @@ extension GCounter: DeltaCRDT {
         _storage
     }
 
-    /// Merges the given delta into the state of this data type instance.
-    ///
+    /// Returns a new instance of a counter with the delta you provide merged into the current counter.
     /// - Parameter delta: The incremental, partial state to merge.
     public func mergeDelta(_ delta: UInt) async -> Self {
         var copy = self

@@ -90,8 +90,7 @@ extension PNCounter: DeltaCRDT {
         PNCounterState(pos: pos_value, neg: neg_value)
     }
 
-    /// Merges the given delta into the state of this data type instance.
-    ///
+    /// Returns a new instance of an counter with the delta you provide merged into the current counter.
     /// - Parameter delta: The incremental, partial state to merge.
     public func mergeDelta(_ delta: PNCounterState) async -> Self {
         var copy = self
