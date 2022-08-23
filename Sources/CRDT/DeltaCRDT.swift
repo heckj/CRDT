@@ -26,10 +26,10 @@ public protocol DeltaCRDT: Replicable {
     ///
     /// - Parameter state: The optional state of the remote CRDT.
     /// - Returns: The changes to be merged into the CRDT instance that provided the state to converge its state with this instance.
-    func delta(_ state: DeltaState?) -> Delta
+    func delta(_ state: DeltaState?) async -> Delta
 
     /// Merges the given delta into the state of this data type instance.
     ///
     /// - Parameter delta: The incremental, partial state to merge.
-    func mergeDelta(_ delta: Delta) -> Self
+    func mergeDelta(_ delta: Delta) async -> Self
 }

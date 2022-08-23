@@ -142,7 +142,7 @@ extension ORSet: DeltaCRDT {
     ///
     /// - Parameter state: The optional state of the remote ORSet.
     /// - Returns: The changes to be merged into the ORSet instance that provided the state to converge its state with this instance.
-    public func delta(_ otherInstanceState: ORSetState?) -> ORSetDelta {
+    public func delta(_ otherInstanceState: ORSetState?) async -> ORSetDelta {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxClockValueByActor: [ActorID: UInt64] = otherInstanceState?.maxClockValueByActor else {
             return ORSetDelta(updates: metadataByValue)
@@ -168,7 +168,7 @@ extension ORSet: DeltaCRDT {
     // func mergeDelta(_ delta: Delta) -> Self
     /// Returns a new instance of an ORSet with the delta you provide merged into the current ORSet.
     /// - Parameter delta: The incremental, partial state to merge.
-    public func mergeDelta(_ delta: ORSetDelta) -> Self {
+    public func mergeDelta(_ delta: ORSetDelta) async -> Self {
         var copy = self
         for (valueKey, metadata) in delta.updates {
             copy.metadataByValue[valueKey] = metadata

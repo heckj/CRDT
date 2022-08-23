@@ -71,25 +71,25 @@ final class LWWRegisterTests: XCTestCase {
         XCTAssertEqual(atom.clockId.actorId, a.selfId)
     }
 
-    func testDeltaState_delta() {
-        let a_nil_delta = a.delta(nil)
+    func testDeltaState_delta() async {
+        let a_nil_delta = await a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.value, 1)
         XCTAssertEqual(a_nil_delta, a.state)
 
-        let a_delta = a.delta(b.state)
+        let a_delta = await a.delta(b.state)
         XCTAssertNotNil(a_delta)
         XCTAssertEqual(a_delta.value, 1)
         XCTAssertEqual(a_delta, a.state)
     }
 
-    func testDeltaState_mergeDelta() {
+    func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        let delta = await b.delta(a.state)
         XCTAssertNotNil(delta)
-        let c = a.mergeDelta(delta)
+        let c = await a.mergeDelta(delta)
         XCTAssertEqual(c.value, b.value)
     }
 }

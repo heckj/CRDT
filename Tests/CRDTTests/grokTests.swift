@@ -84,7 +84,7 @@ final class grokTests: XCTestCase {
             print("Size of GCounter state with UUID.uuidString as actorID: \(pncounter_uuid_string.state.sizeInBytes())")
         }
 
-        func testGSetSizing() throws {
+        func testGSetSizing() async throws {
             let gset_1 = GSet(actorId: UInt(31), [1, 2, 3, 4])
             let gset_2 = GSet(actorId: UInt(31), [4, 5])
 
@@ -92,11 +92,11 @@ final class grokTests: XCTestCase {
             print("GSet2(2 elements, UInt actorId) = \(gset_2.sizeInBytes())")
             print("GSet1's state size: \(gset_1.state.sizeInBytes())")
             print("GSet2's state size: \(gset_1.state.sizeInBytes())")
-            print("Delta size of Set1 merging into Set2: \(gset_2.delta(gset_1.state).sizeInBytes())")
-            print("Delta size of Set2 merging into Set1: \(gset_1.delta(gset_2.state).sizeInBytes())")
+            print("Delta size of Set1 merging into Set2: \(await gset_2.delta(gset_1.state).sizeInBytes())")
+            print("Delta size of Set2 merging into Set1: \(await gset_1.delta(gset_2.state).sizeInBytes())")
         }
 
-        func testORSetSizing() throws {
+        func testORSetSizing() async throws {
             let orset_1 = ORSet(actorId: UInt(31), [1, 2, 3, 4])
             let orset_2 = ORSet(actorId: UInt(31), [4, 5])
 
@@ -104,8 +104,8 @@ final class grokTests: XCTestCase {
             print("ORSet2(2 elements, UInt actorId) = \(orset_2.sizeInBytes())")
             print("ORSet1's state size: \(orset_1.state.sizeInBytes())")
             print("ORSet2's state size: \(orset_1.state.sizeInBytes())")
-            print("Delta size of Set1 merging into Set2: \(orset_2.delta(orset_1.state).sizeInBytes())")
-            print("Delta size of Set2 merging into Set1: \(orset_1.delta(orset_2.state).sizeInBytes())")
+            print("Delta size of Set1 merging into Set2: \(await orset_2.delta(orset_1.state).sizeInBytes())")
+            print("Delta size of Set2 merging into Set1: \(await orset_1.delta(orset_2.state).sizeInBytes())")
         }
 
     #endif

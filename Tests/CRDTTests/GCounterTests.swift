@@ -77,21 +77,21 @@ final class GCounterTests: XCTestCase {
         XCTAssertEqual(atom, a.value)
     }
 
-    func testDeltaState_delta() {
-        let a_nil_delta = a.delta(nil)
+    func testDeltaState_delta() async {
+        let a_nil_delta = await a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta, 1)
 
-        let a_delta = a.delta(b.state)
+        let a_delta = await a.delta(b.state)
         XCTAssertNotNil(a_delta)
         XCTAssertEqual(a_delta, 1)
     }
 
-    func testDeltaState_mergeDelta() {
+    func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let c = a.mergeDelta(b.delta(a.state))
+        let c = await a.mergeDelta(await b.delta(a.state))
         XCTAssertEqual(c.value, b.value)
     }
 }

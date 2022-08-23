@@ -64,11 +64,11 @@ extension PNCounter: DeltaCRDT {
         PNCounterState(pos: pos_value, neg: neg_value)
     }
 
-    public func delta(_: PNCounterState?) -> PNCounterState {
+    public func delta(_: PNCounterState?) async -> PNCounterState {
         PNCounterState(pos: pos_value, neg: neg_value)
     }
 
-    public func mergeDelta(_ delta: PNCounterState) -> Self {
+    public func mergeDelta(_ delta: PNCounterState) async -> Self {
         var copy = self
         copy.pos_value = max(delta.pos, pos_value)
         copy.neg_value = max(delta.neg, neg_value)
