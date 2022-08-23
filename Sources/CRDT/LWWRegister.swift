@@ -72,15 +72,13 @@ extension LWWRegister: DeltaCRDT {
         _storage
     }
 
-    public func delta(_: Atom?) -> [Atom] {
-        [_storage]
+    public func delta(_: Atom?) -> Atom {
+        _storage
     }
 
-    public func mergeDelta(_ delta: [Atom]) -> Self {
+    public func mergeDelta(_ delta: Atom) -> Self {
         var newLWW = self
-        if let lastDelta = delta.last {
-            newLWW._storage = _storage <= lastDelta ? lastDelta : _storage
-        }
+        newLWW._storage = _storage <= delta ? delta : _storage
         return newLWW
     }
 }

@@ -2,8 +2,8 @@
 //  grokTests.swift
 //
 
-import XCTest
 import CRDT
+import XCTest
 // These tests are for me to explore and confirm how swift is working, and don't impact any code.
 final class grokTests: XCTestCase {
     func testTupleSort() throws {
@@ -51,36 +51,49 @@ final class grokTests: XCTestCase {
 //            print("Unexpected error: \(error).")
 //        }
     }
-    #if DEBUG
-    func testSizing() throws {
-        let gcounter_uint_hash = GCounter(actorID: UInt(32))
-        print("Size of GCounter with UInt as actorID: \(gcounter_uint_hash.sizeInBytes())")
-        print("Size of GCounter state with UInt as actorID: \(gcounter_uint_hash.state.sizeInBytes())")
-        
-        let gcounter_uint8_hash = GCounter(actorID: UInt8(32))
-        print("Size of GCounter with UInt8 as actorID: \(gcounter_uint8_hash.sizeInBytes())")
-        print("Size of GCounter state with UInt8 as actorID: \(gcounter_uint8_hash.state.sizeInBytes())")
-        
-        let gcounter_uuid_hash = GCounter(actorID: UUID().hashValue)
-        print("Size of GCounter with UUID.hashvalue as actorID: \(gcounter_uuid_hash.sizeInBytes())")
-        print("Size of GCounter state with UUID.hashvalue as actorID: \(gcounter_uuid_hash.state.sizeInBytes())")
-        
-        let gcounter_uuid_string = GCounter(actorID: UUID().uuidString)
-        print("Size of GCounter with UUID.uuidString as actorID: \(gcounter_uuid_string.sizeInBytes())")
-        print("Size of GCounter state with UUID.uuidString as actorID: \(gcounter_uuid_string.state.sizeInBytes())")
 
-        let pncounter_uint_hash = PNCounter(actorID: UInt(32))
-        print("Size of GCounter with UInt as actorID: \(pncounter_uint_hash.sizeInBytes())")
-        print("Size of GCounter state with UInt as actorID: \(pncounter_uint_hash.state.sizeInBytes())")
-        let pncounter_uint8_hash = PNCounter(actorID: UInt8(32))
-        print("Size of GCounter with UInt8 as actorID: \(pncounter_uint8_hash.sizeInBytes())")
-        print("Size of GCounter state with UInt8 as actorID: \(pncounter_uint8_hash.state.sizeInBytes())")
-        let pncounter_uuid_hash = PNCounter(actorID: UUID().hashValue)
-        print("Size of GCounter with UUID.hashvalue as actorID: \(pncounter_uuid_hash.sizeInBytes())")
-        print("Size of GCounter state with UUID.hashvalue as actorID: \(pncounter_uuid_hash.state.sizeInBytes())")
-        let pncounter_uuid_string = PNCounter(actorID: UUID().uuidString)
-        print("Size of GCounter with UUID.uuidString as actorID: \(pncounter_uuid_string.sizeInBytes())")
-        print("Size of GCounter state with UUID.uuidString as actorID: \(pncounter_uuid_string.state.sizeInBytes())")
-    }
+    #if DEBUG
+        func testSizing() throws {
+            let gcounter_uint_hash = GCounter(actorID: UInt(32))
+            print("Size of GCounter with UInt as actorID: \(gcounter_uint_hash.sizeInBytes())")
+            print("Size of GCounter state with UInt as actorID: \(gcounter_uint_hash.state.sizeInBytes())")
+
+            let gcounter_uint8_hash = GCounter(actorID: UInt8(32))
+            print("Size of GCounter with UInt8 as actorID: \(gcounter_uint8_hash.sizeInBytes())")
+            print("Size of GCounter state with UInt8 as actorID: \(gcounter_uint8_hash.state.sizeInBytes())")
+
+            let gcounter_uuid_hash = GCounter(actorID: UUID().hashValue)
+            print("Size of GCounter with UUID.hashvalue as actorID: \(gcounter_uuid_hash.sizeInBytes())")
+            print("Size of GCounter state with UUID.hashvalue as actorID: \(gcounter_uuid_hash.state.sizeInBytes())")
+
+            let gcounter_uuid_string = GCounter(actorID: UUID().uuidString)
+            print("Size of GCounter with UUID.uuidString as actorID: \(gcounter_uuid_string.sizeInBytes())")
+            print("Size of GCounter state with UUID.uuidString as actorID: \(gcounter_uuid_string.state.sizeInBytes())")
+
+            let pncounter_uint_hash = PNCounter(actorID: UInt(32))
+            print("Size of GCounter with UInt as actorID: \(pncounter_uint_hash.sizeInBytes())")
+            print("Size of GCounter state with UInt as actorID: \(pncounter_uint_hash.state.sizeInBytes())")
+            let pncounter_uint8_hash = PNCounter(actorID: UInt8(32))
+            print("Size of GCounter with UInt8 as actorID: \(pncounter_uint8_hash.sizeInBytes())")
+            print("Size of GCounter state with UInt8 as actorID: \(pncounter_uint8_hash.state.sizeInBytes())")
+            let pncounter_uuid_hash = PNCounter(actorID: UUID().hashValue)
+            print("Size of GCounter with UUID.hashvalue as actorID: \(pncounter_uuid_hash.sizeInBytes())")
+            print("Size of GCounter state with UUID.hashvalue as actorID: \(pncounter_uuid_hash.state.sizeInBytes())")
+            let pncounter_uuid_string = PNCounter(actorID: UUID().uuidString)
+            print("Size of GCounter with UUID.uuidString as actorID: \(pncounter_uuid_string.sizeInBytes())")
+            print("Size of GCounter state with UUID.uuidString as actorID: \(pncounter_uuid_string.state.sizeInBytes())")
+        }
+
+        func testGSetSizing() throws {
+            let gset_1 = GSet(actorId: UInt(31), [1, 2, 3, 4])
+            let gset_2 = GSet(actorId: UInt(31), [4, 5])
+
+            print("GSet1(4 elements, UInt actorId) = \(gset_1.sizeInBytes())")
+            print("GSet2(2 elements, UInt actorId) = \(gset_2.sizeInBytes())")
+            print("GSet1's state size: \(gset_1.state.sizeInBytes())")
+            print("GSet2's state size: \(gset_1.state.sizeInBytes())")
+            print("Delta size of Set1 merging into Set2: \(gset_2.delta(gset_1.state).sizeInBytes())")
+            print("Delta size of Set2 merging into Set1: \(gset_1.delta(gset_2.state).sizeInBytes())")
+        }
     #endif
 }

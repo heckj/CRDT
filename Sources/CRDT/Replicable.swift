@@ -34,10 +34,10 @@ public protocol PartiallyOrderable {
 /// - SeeAlso: [Efficient Synchronization of State-based CRDTs](https://arxiv.org/pdf/1803.02750.pdf)
 public protocol DeltaCRDT: Replicable {
     associatedtype DeltaState
-    associatedtype Delta: PartiallyOrderable, Identifiable
+    associatedtype Delta
 
     var state: DeltaState { get }
-    func delta(_ state: DeltaState?) -> [Delta]
+    func delta(_ state: DeltaState?) -> Delta
 
     // Do we want something that provides a list of atoms for this CRDT
     // func atoms() -› [LogEncodable]
@@ -46,15 +46,5 @@ public protocol DeltaCRDT: Replicable {
     /// Merges the given delta into the state of this data type instance.
     ///
     /// - Parameter delta: The incremental, partial state to merge.
-    func mergeDelta(_ delta: [Delta]) -> Self
-}
-
-extension DeltaCRDT {
-    /// Creates a data type instance by merging the given delta with the state of this data type instance.
-    ///
-    /// - Parameter delta: The incremental, partial state to merge.
-    /// - Returns: A new data type instance with the merged state of this data type instance and `delta`.
-    func mergeDelta(_ delta: Delta) -> Self {
-        mergeDelta([delta])
-    }
+    func mergeDelta(_ delta: Delta) -> Self
 }
