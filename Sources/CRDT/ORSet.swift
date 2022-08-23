@@ -56,7 +56,7 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
     public func contains(_ value: T) -> Bool {
         !(metadataByValue[value]?.isDeleted ?? true)
     }
-    
+
     /// The number of items in the set.
     public var count: Int {
         metadataByValue.filter { !$1.isDeleted }.count
@@ -80,7 +80,7 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
 
         return isNewInsert
     }
-    
+
     /// Removes a value from the set.
     /// - Parameter value: The value to remove.
     /// - Returns: The value removed from the set, or `nil` if the value didn't exist.

@@ -10,12 +10,12 @@ import Foundation
 public struct GCounter<ActorID: Hashable & Comparable> {
     private var _storage: UInt
     internal let selfId: ActorID
-    
+
     /// The counter's value.
     public var value: UInt {
         _storage
     }
-    
+
     /// Increments the counter.
     @discardableResult
     public mutating func increment() -> UInt {
@@ -24,7 +24,7 @@ public struct GCounter<ActorID: Hashable & Comparable> {
         }
         return _storage
     }
-    
+
     /// Creates a new counter.
     /// - Parameters:
     ///   - value: An optional parameter to set an initial counter value.
@@ -52,7 +52,7 @@ extension GCounter: DeltaCRDT {
             _storage
         }
     }
-    
+
     /// Computes and returns a diff from the current state of the counter to be used to update another instance.
     ///
     /// - Parameter state: The optional state of the remote CRDT.

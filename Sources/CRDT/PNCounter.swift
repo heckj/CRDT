@@ -28,16 +28,16 @@ public struct PNCounter<ActorID: Hashable & Comparable> {
     @discardableResult
     public mutating func increment() -> Int {
         pos_value += 1
-        return self.value
+        return value
     }
 
     /// Decrements the counter.
     @discardableResult
     public mutating func decrement() -> Int {
         neg_value += 1
-        return self.value
+        return value
     }
-    
+
     /// Creates a new counter.
     /// - Parameters:
     ///   - value: An optional parameter to set an initial counter value.
@@ -68,7 +68,7 @@ extension PNCounter: Replicable {
 extension PNCounter: DeltaCRDT {
 //    public typealias DeltaState = Self.Atom
 //    public typealias Delta = Self.Atom
-    
+
     /// A struct that represents the state of a PNCounter.
     public struct PNCounterState {
         let pos: UInt
