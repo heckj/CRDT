@@ -102,21 +102,33 @@ extension ORSet: Replicable {
     }
 }
 
-// extension ORSet: DeltaCRDT {
-////    public typealias DeltaState = Self.Atom
-////    public typealias Delta = Self.Atom
-//    public var state: Atom {
+//extension ORSet: DeltaCRDT {
+//    //    associatedtype DeltaState
+//    public struct ORSetState {
+//        let values: Set<T>
+//    }
+//
+//    //    associatedtype Delta
+//    public struct ORSetDelta {
+//        let lamportClock: LamportTimestamp<ActorID>
+//        let values: Set<T>
+//    }
+//
+//    // var state: DeltaState { get }
+//    public var state: ORSetState {
 //        _storage
 //    }
 //
-//    public func delta(_: Atom?) -> [Atom] {
+//    // func delta(_ state: DeltaState?) -> Delta
+//    public func delta(_: ORSetState?) -> ORSetDelta {
 //        [_storage]
 //    }
 //
-//    public func mergeDelta(_ delta: [Atom]) -> Self {
+//    // func mergeDelta(_ delta: Delta) -> Self
+//    public func mergeDelta(_ delta: ORSetDelta) -> Self {
 //        var copy = self
 //        // Merging two grow-only sets is (conveniently) the union of the two sets
-//        let reducedSet = delta.reduce(into: Set<T>(self._storage.values)) { partialResult, atom in
+//        let reducedSet = delta.reduce(into: Set<T>(_storage.values)) { partialResult, atom in
 //            partialResult = partialResult.union(atom.values)
 //        }
 //        copy._storage.values = reducedSet
@@ -128,7 +140,7 @@ extension ORSet: Replicable {
 //        copy._storage.clockId.tick()
 //        return copy
 //    }
-// }
+//}
 
 extension ORSet: Codable where T: Codable, ActorID: Codable {}
 
