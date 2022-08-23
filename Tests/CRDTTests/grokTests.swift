@@ -98,7 +98,7 @@ final class grokTests: XCTestCase {
 
         func testORSetSizing() async throws {
             let orset_1 = ORSet(actorId: UInt(31), [1, 2, 3, 4])
-            let orset_2 = ORSet(actorId: UInt(31), [4, 5])
+            let orset_2 = ORSet(actorId: UInt(13), [4, 5])
 
             print("ORSet1(4 elements, UInt actorId) = \(orset_1.sizeInBytes())")
             print("ORSet2(2 elements, UInt actorId) = \(orset_2.sizeInBytes())")

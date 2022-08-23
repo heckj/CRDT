@@ -129,4 +129,29 @@ final class ORSetTests: XCTestCase {
         let c = await a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
+
+    func testUnrelatedMerges() async {
+        let orset_1 = ORSet(actorId: UInt(31), [1, 2, 3, 4])
+        let orset_2 = ORSet(actorId: UInt(13), [4, 5])
+
+        let diff_a = await orset_1.delta(await orset_2.state)
+        // diff_a is the delta from set 1
+        XCTAssertNotNil(diff_a)
+        XCTAssertEqual(diff_a.updates.count, 4)
+
+        let diff_b = await orset_2.delta(await orset_1.state)
+        // diff_b is the delta from set 2
+        XCTAssertNotNil(diff_b)
+        XCTAssertEqual(diff_b.updates.count, 2)
+
+        // merge the diff from set 1 into set 2
+        let mergedFrom1 = await orset_2.mergeDelta(diff_a)
+        XCTAssertEqual(mergedFrom1.count, 5)
+
+        // merge the diff from set 2 into set 1
+        let mergedFrom2 = await orset_1.mergeDelta(diff_b)
+        XCTAssertEqual(mergedFrom2.count, 5)
+
+        XCTAssertEqual(mergedFrom1.values, mergedFrom2.values)
+    }
 }
