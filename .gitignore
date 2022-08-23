@@ -8,3 +8,5 @@ DerivedData/
 .swiftpm/config/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
+.crdt-graphs
+Sources/CRDT/Documentation.docc/.docc-build
