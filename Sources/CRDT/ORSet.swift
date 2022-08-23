@@ -13,65 +13,64 @@ import Foundation
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368)
 public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
-    
     public struct Metadata {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
-        
+
         init(lamportTimestamp: LamportTimestamp<ActorID>) {
-            self.isDeleted = false
+            isDeleted = false
             self.lamportTimestamp = lamportTimestamp
         }
     }
-    
+
     internal var selfId: ActorID
     internal var currentTimestamp: LamportTimestamp<ActorID>
-    internal var metadataByValue: Dictionary<T, Metadata>
-    
+    internal var metadataByValue: [T: Metadata]
+
     public init(actorId: ActorID) {
         selfId = actorId
-        self.metadataByValue = .init()
-        self.currentTimestamp = .init(actorId: selfId)
+        metadataByValue = .init()
+        currentTimestamp = .init(actorId: selfId)
     }
-    
+
     public init(actorId: ActorID, array elements: [T]) {
         selfId = actorId
         self = .init(actorId: selfId)
         elements.forEach { self.insert($0) }
     }
-    
+
     public var values: Set<T> {
-        let values = metadataByValue.filter({ !$1.isDeleted }).map({ $0.key })
+        let values = metadataByValue.filter { !$1.isDeleted }.map(\.key)
         return Set(values)
     }
-    
+
     public func contains(_ value: T) -> Bool {
         !(metadataByValue[value]?.isDeleted ?? true)
     }
 
     public var count: Int {
-        metadataByValue.filter({ !$1.isDeleted }).count
+        metadataByValue.filter { !$1.isDeleted }.count
     }
 
     @discardableResult public mutating func insert(_ value: T) -> Bool {
         currentTimestamp.tick()
-        
+
         let metadata = Metadata(lamportTimestamp: currentTimestamp)
         let isNewInsert: Bool
-        
+
         if let oldMetadata = metadataByValue[value] {
             isNewInsert = oldMetadata.isDeleted
         } else {
             isNewInsert = true
         }
         metadataByValue[value] = metadata
-        
+
         return isNewInsert
     }
-    
+
     @discardableResult public mutating func remove(_ value: T) -> T? {
         let returnValue: T?
-        
+
         if let oldMetadata = metadataByValue[value], !oldMetadata.isDeleted {
             currentTimestamp.tick()
             var metadata = Metadata(lamportTimestamp: currentTimestamp)
@@ -81,13 +80,12 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
         } else {
             returnValue = nil
         }
-        
+
         return returnValue
     }
 }
 
 extension ORSet: Replicable {
-    
     public func merged(with other: ORSet) -> ORSet {
         var copy = self
         copy.metadataByValue = other.metadataByValue.reduce(into: metadataByValue) { result, entry in
@@ -99,13 +97,12 @@ extension ORSet: Replicable {
                 result[entry.key] = secondMetadata
             }
         }
-        copy.currentTimestamp = max(self.currentTimestamp, other.currentTimestamp)
+        copy.currentTimestamp = max(currentTimestamp, other.currentTimestamp)
         return copy
     }
-    
 }
 
-//extension ORSet: DeltaCRDT {
+// extension ORSet: DeltaCRDT {
 ////    public typealias DeltaState = Self.Atom
 ////    public typealias Delta = Self.Atom
 //    public var state: Atom {
@@ -131,25 +128,19 @@ extension ORSet: Replicable {
 //        copy._storage.clockId.tick()
 //        return copy
 //    }
-//}
+// }
 
-extension ORSet: Codable where T: Codable, ActorID: Codable {
-}
+extension ORSet: Codable where T: Codable, ActorID: Codable {}
 
-extension ORSet.Metadata: Codable where T: Codable, ActorID: Codable {
-}
+extension ORSet.Metadata: Codable where T: Codable, ActorID: Codable {}
 
-extension ORSet: Equatable where T: Equatable {
-}
+extension ORSet: Equatable where T: Equatable {}
 
-extension ORSet.Metadata: Equatable where T: Equatable {
-}
+extension ORSet.Metadata: Equatable where T: Equatable {}
 
-extension ORSet: Hashable where T: Hashable {
-}
+extension ORSet: Hashable where T: Hashable {}
 
-extension ORSet.Metadata: Hashable where T: Hashable {
-}
+extension ORSet.Metadata: Hashable where T: Hashable {}
 
 #if DEBUG
     extension ORSet.Metadata: ApproxSizeable {

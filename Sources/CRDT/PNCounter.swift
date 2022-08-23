@@ -8,35 +8,8 @@ import Foundation
 /// Based on GCounter implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct PNCounter<ActorID: Hashable & Comparable> {
-    /// The replicated state structure for PNCounter
-    public struct Atom: Identifiable, PartiallyOrderable {
-        internal var pos_value: UInt
-        internal var neg_value: UInt
-        internal var clockId: WallclockTimestamp<ActorID>
-        /// The identity of the counter metadata (atom) computed from the actor Id and a current timestamp.
-        public var id: String {
-            clockId.id
-        }
-
-        init(pos: UInt, neg: UInt, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
-            pos_value = pos
-            neg_value = neg
-            clockId = WallclockTimestamp(actorId: id, timestamp: timestamp)
-        }
-
-        // Note: this particular CRDT implementation doesn't rely on partial order of updates,
-        // so this additional constraint (and implementation) could be dropped - but then we'd have
-        // to have a looser definition of delta-CRDT.
-
-        // MARK: Conformance of LWWRegister.Atom to PartiallyOrderable
-
-        public static func <= (lhs: Self, rhs: Self) -> Bool {
-            // functionally equivalent to say rhs instance is ordered after lhs instance
-            lhs.clockId <= rhs.clockId
-        }
-    }
-
-    private var _storage: Atom
+    internal var pos_value: UInt
+    internal var neg_value: UInt
     internal let selfId: ActorID
 
     public var value: Int {
@@ -44,37 +17,28 @@ public struct PNCounter<ActorID: Hashable & Comparable> {
         // expression ? valueIfTrue : valueIfFalse
 
         // clamp UInt values to maximum Int values to avoid overflowing the runtime conversion
-        let pos_int: Int = _storage.pos_value <= Int.max ? Int(_storage.pos_value) : Int.max
-        let neg_int: Int = _storage.neg_value <= Int.max ? Int(_storage.neg_value) : Int.max
+        let pos_int: Int = pos_value <= Int.max ? Int(pos_value) : Int.max
+        let neg_int: Int = neg_value <= Int.max ? Int(neg_value) : Int.max
 
         return pos_int - neg_int
     }
 
     public mutating func increment() {
-        let newAtom = Atom(pos: _storage.pos_value + 1, neg: _storage.neg_value, id: selfId)
-        _storage = newAtom
+        pos_value += 1
     }
 
     public mutating func decrement() {
-        let newAtom = Atom(pos: _storage.pos_value, neg: _storage.neg_value + 1, id: selfId)
-        _storage = newAtom
+        neg_value += 1
     }
 
-    public init(_ value: Int = 0, actorID: ActorID, timestamp: TimeInterval? = nil) {
+    public init(_ value: Int = 0, actorID: ActorID) {
         selfId = actorID
-        let pos: UInt
-        let neg: UInt
         if value >= 0 {
-            pos = UInt(value)
-            neg = 0
+            pos_value = UInt(value)
+            neg_value = 0
         } else {
-            pos = 0
-            neg = value > Int.min ? UInt(abs(value)) : UInt(abs(Int.min + 1))
-        }
-        if let timestamp = timestamp {
-            _storage = Atom(pos: pos, neg: neg, id: selfId, timestamp: timestamp)
-        } else {
-            _storage = Atom(pos: pos, neg: neg, id: selfId)
+            pos_value = 0
+            neg_value = value > Int.min ? UInt(abs(value)) : UInt(abs(Int.min + 1))
         }
     }
 }
@@ -82,7 +46,8 @@ public struct PNCounter<ActorID: Hashable & Comparable> {
 extension PNCounter: Replicable {
     public func merged(with other: Self) -> Self {
         var copy = self
-        copy._storage = Atom(pos: max(other._storage.pos_value, _storage.pos_value), neg: max(other._storage.neg_value, _storage.neg_value), id: selfId)
+        copy.pos_value = max(other.pos_value, pos_value)
+        copy.neg_value = max(other.neg_value, neg_value)
         return copy
     }
 }
@@ -90,51 +55,43 @@ extension PNCounter: Replicable {
 extension PNCounter: DeltaCRDT {
 //    public typealias DeltaState = Self.Atom
 //    public typealias Delta = Self.Atom
-    public var state: Atom {
-        _storage
+    public struct PNCounterState {
+        let pos: UInt
+        let neg: UInt
     }
 
-    public func delta(_: Atom?) -> [Atom] {
-        [_storage]
+    public var state: PNCounterState {
+        PNCounterState(pos: pos_value, neg: neg_value)
     }
 
-    public func mergeDelta(_ delta: [Atom]) -> Self {
+    public func delta(_: PNCounterState?) -> PNCounterState {
+        PNCounterState(pos: pos_value, neg: neg_value)
+    }
+
+    public func mergeDelta(_ delta: PNCounterState) -> Self {
         var copy = self
-        var withLocalValue = delta
-        withLocalValue.append(_storage)
-        let maxPosValue = withLocalValue.reduce(into: 0) { partialResult, atom in
-            partialResult = max(partialResult, atom.pos_value)
-        }
-        let maxNegValue = withLocalValue.reduce(into: 0) { partialResult, atom in
-            partialResult = max(partialResult, atom.neg_value)
-        }
-        copy._storage = Atom(pos: maxPosValue, neg: maxNegValue, id: selfId)
+        copy.pos_value = max(delta.pos, pos_value)
+        copy.neg_value = max(delta.neg, neg_value)
         return copy
     }
 }
 
 extension PNCounter: Codable where ActorID: Codable {}
 
-extension PNCounter.Atom: Codable where ActorID: Codable {}
-
 extension PNCounter: Equatable {}
 
-extension PNCounter.Atom: Equatable {}
-
 extension PNCounter: Hashable {}
-
-extension PNCounter.Atom: Hashable {}
 
 #if DEBUG
     extension PNCounter: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            _storage.sizeInBytes() + MemoryLayout<ActorID>.size(ofValue: selfId)
+            2 * MemoryLayout<UInt>.size + MemoryLayout<ActorID>.size(ofValue: selfId)
         }
     }
 
-    extension PNCounter.Atom: ApproxSizeable {
+    extension PNCounter.PNCounterState: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            clockId.sizeInBytes() + 2 * MemoryLayout<UInt>.size(ofValue: pos_value)
+            2 * MemoryLayout<UInt>.size
         }
     }
 #endif

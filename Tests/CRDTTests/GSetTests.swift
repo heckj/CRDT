@@ -6,26 +6,29 @@
 import XCTest
 
 final class GSetTests: XCTestCase {
-
     var a: GSet<String, Int>!
     var b: GSet<String, Int>!
-    
+
     override func setUp() async throws {
         a = GSet(actorId: "a")
-        b = GSet(actorId: "b", [99,100,101])
+        b = GSet(actorId: "b", [99, 100, 101])
     }
 
     func testInitialCreation() {
         XCTAssertEqual(a.values.count, 0)
         XCTAssertEqual(a.currentTimestamp.actorId, "a")
         XCTAssertEqual(a.currentTimestamp.clock, 0)
+        XCTAssertEqual(a.count, 0)
+
+        XCTAssertEqual(b.count, 3)
+        XCTAssertTrue(b.contains(101))
     }
 
     func testSettingValue() {
         a.insert(2)
         XCTAssertEqual(a.values, [2])
         a.insert(3)
-        XCTAssertEqual(a.values, [2,3])
+        XCTAssertEqual(a.values, [2, 3])
     }
 
     func testMergeOfInitiallyUnrelated() {
@@ -49,7 +52,7 @@ final class GSetTests: XCTestCase {
     }
 
     func testAssociativity() {
-        let c = GSet(actorId: "c", [200,300,400])
+        let c = GSet(actorId: "c", [200, 300, 400])
         let e = a.merged(with: b).merged(with: c)
         let f = a.merged(with: b.merged(with: c))
         XCTAssertEqual(e.values, f.values)
@@ -71,13 +74,11 @@ final class GSetTests: XCTestCase {
         let a_nil_delta = a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
-        XCTAssertEqual(a_nil_delta.count, 1)
-        XCTAssertEqual(a_nil_delta[0].values, [])
+        XCTAssertEqual(a_nil_delta.values, [])
 
         let a_delta = a.delta(b.state)
         XCTAssertNotNil(a_delta)
-        XCTAssertEqual(a_delta.count, 1)
-        XCTAssertEqual(a_delta[0].values, [])
+        XCTAssertEqual(a_delta.values, [])
     }
 
     func testDeltaState_mergeDeltas() {
@@ -86,11 +87,6 @@ final class GSetTests: XCTestCase {
         let delta = b.delta(a.state)
         let c = a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
-    }
-
-    func testDeltaState_mergeEmptyDeltas() {
-        let c = a.mergeDelta([])
-        XCTAssertEqual(c.values, a.values)
     }
 
     func testDeltaState_mergeDelta() {

@@ -76,33 +76,21 @@ final class LWWRegisterTests: XCTestCase {
         let a_nil_delta = a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
-        XCTAssertEqual(a_nil_delta.count, 1)
-        XCTAssertEqual(a_nil_delta[0].value, 1)
-        XCTAssertEqual(a_nil_delta[0], a.state)
+        XCTAssertEqual(a_nil_delta.value, 1)
+        XCTAssertEqual(a_nil_delta, a.state)
 
         let a_delta = a.delta(b.state)
         XCTAssertNotNil(a_delta)
-        XCTAssertEqual(a_delta.count, 1)
-        XCTAssertEqual(a_delta[0].value, 1)
-        XCTAssertEqual(a_delta[0], a.state)
-    }
-
-    func testDeltaState_mergeDeltas() {
-        // equiv direct merge
-        // let c = a.merged(with: b)
-        let c = a.mergeDelta([b.state])
-        XCTAssertEqual(c.value, b.value)
-    }
-
-    func testDeltaState_mergeEmptyDeltas() {
-        let c = a.mergeDelta([])
-        XCTAssertEqual(c.value, a.value)
+        XCTAssertEqual(a_delta.value, 1)
+        XCTAssertEqual(a_delta, a.state)
     }
 
     func testDeltaState_mergeDelta() {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let c = a.mergeDelta(b.state)
+        let delta = b.delta(a.state)
+        XCTAssertNotNil(delta)
+        let c = a.mergeDelta(delta)
         XCTAssertEqual(c.value, b.value)
     }
 }
