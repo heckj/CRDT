@@ -40,11 +40,11 @@ extension GCounter: DeltaCRDT {
         _storage
     }
 
-    public func delta(_: UInt?) -> UInt {
+    public func delta(_: UInt?) async -> UInt {
         _storage
     }
 
-    public func mergeDelta(_ delta: UInt) -> Self {
+    public func mergeDelta(_ delta: UInt) async -> Self {
         var copy = self
         copy._storage = max(_storage, delta)
         return copy

@@ -66,7 +66,7 @@ extension GSet: DeltaCRDT {
     }
 
     // func delta(_ state: DeltaState?) -> [Delta]
-    public func delta(_ otherState: GSetState?) -> GSetDelta {
+    public func delta(_ otherState: GSetState?) async -> GSetDelta {
         if let otherState = otherState {
             var diff = _storage
             for val in _storage.intersection(otherState.values) {
@@ -79,7 +79,7 @@ extension GSet: DeltaCRDT {
     }
 
     // func mergeDelta(_ delta: [Delta]) -> Self
-    public func mergeDelta(_ delta: GSetDelta) -> Self {
+    public func mergeDelta(_ delta: GSetDelta) async -> Self {
         var copy = self
         // Merging two grow-only sets is (conveniently) the union of the two sets
         copy._storage = values.union(delta.values)

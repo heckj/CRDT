@@ -100,33 +100,33 @@ final class ORSetTests: XCTestCase {
         XCTAssertEqual(Array(state.maxClockValueByActor.values), [a.currentTimestamp.clock])
     }
 
-    func testDeltaState_nilDelta() {
-        let a_nil_delta = a.delta(nil)
+    func testDeltaState_nilDelta() async {
+        let a_nil_delta = await a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.updates.count, 1)
         XCTAssertEqual(a_nil_delta.updates, a.metadataByValue)
     }
 
-    func testDeltaState_delta() {
-        let a_delta = a.delta(b.state)
+    func testDeltaState_delta() async {
+        let a_delta = await a.delta(b.state)
         XCTAssertEqual(a_delta.updates.count, 1)
         XCTAssertEqual(a_delta.updates, a.metadataByValue)
     }
 
-    func testDeltaState_mergeDeltas() {
+    func testDeltaState_mergeDeltas() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
-        let c = a.mergeDelta(delta)
+        let delta = await b.delta(a.state)
+        let c = await a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
 
-    func testDeltaState_mergeDelta() {
+    func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
-        let c = a.mergeDelta(delta)
+        let delta = await b.delta(a.state)
+        let c = await a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
 }
