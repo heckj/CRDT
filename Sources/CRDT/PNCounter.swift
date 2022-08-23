@@ -77,10 +77,13 @@ extension PNCounter: DeltaCRDT {
 }
 
 extension PNCounter: Codable where ActorID: Codable {}
+extension PNCounter.PNCounterState: Codable where ActorID: Codable {}
 
 extension PNCounter: Equatable {}
+extension PNCounter.PNCounterState: Equatable {}
 
 extension PNCounter: Hashable {}
+extension PNCounter.PNCounterState: Hashable {}
 
 #if DEBUG
     extension PNCounter: ApproxSizeable {

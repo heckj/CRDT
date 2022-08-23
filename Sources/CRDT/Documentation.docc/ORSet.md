@@ -2,28 +2,39 @@
 
 ## Topics
 
-### Creating a GCounter
+### Creating a Set
 
-- ``CRDT/ORSet/!=(_:_:)``
-- ``CRDT/ORSet/Metadata``
-- ``CRDT/ORSet/Metadata/!=(_:_:)``
-- ``CRDT/ORSet/Metadata/init(from:)``
-- ``CRDT/ORSet/Metadata/sizeInBytes()``
-- ``CRDT/ORSet/ORSetDelta``
-- ``CRDT/ORSet/ORSetDelta/sizeInBytes()``
-- ``CRDT/ORSet/ORSetState``
-- ``CRDT/ORSet/ORSetState/sizeInBytes()``
+- ``CRDT/ORSet/init(actorId:clock:)``
+- ``CRDT/ORSet/init(actorId:clock:_:)``
+
+### Inspecting the Set
+
+- ``CRDT/ORSet/values``
 - ``CRDT/ORSet/contains(_:)``
 - ``CRDT/ORSet/count``
-- ``CRDT/ORSet/delta(_:)``
-- ``CRDT/ORSet/init(actorId:)``
-- ``CRDT/ORSet/init(actorId:_:)``
-- ``CRDT/ORSet/init(from:)``
-- ``CRDT/ORSet/insert(_:)``
-- ``CRDT/ORSet/mergeDelta(_:)``
-- ``CRDT/ORSet/merged(with:)``
-- ``CRDT/ORSet/remove(_:)``
-- ``CRDT/ORSet/sizeInBytes()``
-- ``CRDT/ORSet/state``
-- ``CRDT/ORSet/values``
 
+### Updating the Set
+
+- ``CRDT/ORSet/insert(_:)``
+- ``CRDT/ORSet/remove(_:)``
+
+### Replicating a Set
+
+- ``CRDT/ORSet/merged(with:)``
+
+### Delta-based Replicating
+
+- ``CRDT/ORSet/state``
+- ``CRDT/ORSet/ORSetState``
+- ``CRDT/ORSet/delta(_:)``
+- ``CRDT/ORSet/ORSetDelta``
+- ``CRDT/ORSet/mergeDelta(_:)``
+
+
+### Decoding a Set
+
+- ``CRDT/ORSet/init(from:)``
+
+### Debugging and Optimization Methods
+
+- ``CRDT/ORSet/sizeInBytes()``

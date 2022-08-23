@@ -2,22 +2,29 @@
 
 ## Topics
 
-### Creating a GCounter
+### Creating a Register
 
-- ``CRDT/LWWRegister/!=(_:_:)``
-- ``CRDT/LWWRegister/Atom``
-- ``CRDT/LWWRegister/Atom/!=(_:_:)``
-- ``CRDT/LWWRegister/Atom/_=(_:_:)``
-- ``CRDT/LWWRegister/Atom/id-63d9``
-- ``CRDT/LWWRegister/Atom/id-9o6m3``
-- ``CRDT/LWWRegister/Atom/init(from:)``
-- ``CRDT/LWWRegister/Atom/sizeInBytes()``
-- ``CRDT/LWWRegister/delta(_:)``
 - ``CRDT/LWWRegister/init(_:actorID:timestamp:)``
-- ``CRDT/LWWRegister/init(from:)``
-- ``CRDT/LWWRegister/mergeDelta(_:)``
-- ``CRDT/LWWRegister/merged(with:)``
-- ``CRDT/LWWRegister/sizeInBytes()``
-- ``CRDT/LWWRegister/state``
+
+### Inspecting or Updating the Register
+
 - ``CRDT/LWWRegister/value``
 
+### Replicating a Register
+
+- ``CRDT/LWWRegister/merged(with:)``
+
+### Delta-based Replicating
+
+- ``CRDT/LWWRegister/state``
+- ``CRDT/LWWRegister/delta(_:)``
+- ``CRDT/LWWRegister/mergeDelta(_:)``
+- ``CRDT/LWWRegister/Atom``
+
+### Decoding a Register
+
+- ``CRDT/LWWRegister/init(from:)``
+
+### Debugging and Optimization Methods
+
+- ``CRDT/LWWRegister/sizeInBytes()``

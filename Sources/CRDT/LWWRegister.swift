@@ -12,14 +12,9 @@ import Foundation
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct LWWRegister<ActorID: Hashable & Comparable, T> {
     /// The replicated state structure for LWWRegister
-    public struct Atom: Identifiable, PartiallyOrderable {
+    public struct Atom {
         internal var value: T
         internal var clockId: WallclockTimestamp<ActorID>
-
-        /// The identity of the counter metadata (atom) computed from the actor Id and a current timestamp.
-        public var id: String {
-            clockId.id
-        }
 
         init(value: T, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
             self.value = value
@@ -84,15 +79,12 @@ extension LWWRegister: DeltaCRDT {
 }
 
 extension LWWRegister: Codable where T: Codable, ActorID: Codable {}
-
 extension LWWRegister.Atom: Codable where T: Codable, ActorID: Codable {}
 
 extension LWWRegister: Equatable where T: Equatable {}
-
 extension LWWRegister.Atom: Equatable where T: Equatable {}
 
 extension LWWRegister: Hashable where T: Hashable {}
-
 extension LWWRegister.Atom: Hashable where T: Hashable {}
 
 #if DEBUG
