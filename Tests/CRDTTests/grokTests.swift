@@ -18,11 +18,8 @@ final class grokTests: XCTestCase {
         XCTAssertTrue((1, 5) == (1, 5))
     }
 
-    let x: UInt = 1
-    let y: UInt = 2
-
     func testMinMax() throws {
-        let a = Int.min + 1 // Int.min doesn't convert to UInt - just one more than it can handle...
+        let a = Int.min + 1 // Int.min doesn't convert to UInt - its just one more than it can handle...
         let b = abs(a)
         // print(b)
         let c = UInt(b)
@@ -30,27 +27,30 @@ final class grokTests: XCTestCase {
         // print(c)
     }
 
-    func SKIPtestUIntOverflowLimits() throws {
-//        do {
-        let result = x - y // swift runtime overflow, can't catch & handle...
-        print(result)
-//        } catch {
-//            print("Unexpected error: \(error).")
-//        }
-    }
-
-    func SKIPtestIntConversion() throws {
-        let intMax = Int.max
-        var converted = UInt(intMax)
-        converted += 1
-
-//        do {
-        let result = Int(converted) // Runtime fatalerror here
-        print(result)
-//        } catch {
-//            print("Unexpected error: \(error).")
-//        }
-    }
+//    let x: UInt = 1
+//    let y: UInt = 2
+//
+//    func SKIPtestUIntOverflowLimits() throws {
+    ////        do {
+//        let result = x - y // swift runtime overflow, can't catch & handle...
+//        print(result)
+    ////        } catch {
+    ////            print("Unexpected error: \(error).")
+    ////        }
+//    }
+//
+//    func SKIPtestIntConversion() throws {
+//        let intMax = Int.max
+//        var converted = UInt(intMax)
+//        converted += 1
+//
+    ////        do {
+//        let result = Int(converted) // Runtime fatalerror here
+//        print(result)
+    ////        } catch {
+    ////            print("Unexpected error: \(error).")
+    ////        }
+//    }
 
     #if DEBUG
         func testSizing() throws {
@@ -95,5 +95,18 @@ final class grokTests: XCTestCase {
             print("Delta size of Set1 merging into Set2: \(gset_2.delta(gset_1.state).sizeInBytes())")
             print("Delta size of Set2 merging into Set1: \(gset_1.delta(gset_2.state).sizeInBytes())")
         }
+
+        func testORSetSizing() throws {
+            let orset_1 = ORSet(actorId: UInt(31), [1, 2, 3, 4])
+            let orset_2 = ORSet(actorId: UInt(31), [4, 5])
+
+            print("ORSet1(4 elements, UInt actorId) = \(orset_1.sizeInBytes())")
+            print("ORSet2(2 elements, UInt actorId) = \(orset_2.sizeInBytes())")
+            print("ORSet1's state size: \(orset_1.state.sizeInBytes())")
+            print("ORSet2's state size: \(orset_1.state.sizeInBytes())")
+            print("Delta size of Set1 merging into Set2: \(orset_2.delta(orset_1.state).sizeInBytes())")
+            print("Delta size of Set2 merging into Set1: \(orset_1.delta(orset_2.state).sizeInBytes())")
+        }
+
     #endif
 }
