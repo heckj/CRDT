@@ -64,8 +64,8 @@ final class GSetTests: XCTestCase {
         XCTAssertEqual(b, d)
     }
 
-    func testDeltaState_state() {
-        let state = a.state
+    func testDeltaState_state() async {
+        let state = await a.state
         XCTAssertNotNil(state)
         XCTAssertEqual(state.values, a.values)
     }

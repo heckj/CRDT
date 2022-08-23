@@ -115,24 +115,26 @@ extension ORSet: DeltaCRDT {
     // var state: DeltaState { get }
     /// The current state of the ORSet.
     public var state: ORSetState {
-        // The composed, compressed state to compare consists of a list of all the collaborators (represented
-        // by the actorId in the LamportTimestamps) with their highest value for clock.
-        var maxClockValueByActor: [ActorID: UInt64]
-        maxClockValueByActor = metadataByValue.reduce(into: [:]) { partialResult, valueMetaData in
-            // Do the keys already reference an actorID?
-            if partialResult.keys.contains(valueMetaData.value.lamportTimestamp.actorId) {
-                // The keys know of this actorId, so update the value is the clock value of the timestamp is larger.
-                if let latestKnownClock = partialResult[valueMetaData.value.lamportTimestamp.actorId],
-                   latestKnownClock < valueMetaData.value.lamportTimestamp.clock
-                {
+        get async {
+            // The composed, compressed state to compare consists of a list of all the collaborators (represented
+            // by the actorId in the LamportTimestamps) with their highest value for clock.
+            var maxClockValueByActor: [ActorID: UInt64]
+            maxClockValueByActor = metadataByValue.reduce(into: [:]) { partialResult, valueMetaData in
+                // Do the keys already reference an actorID?
+                if partialResult.keys.contains(valueMetaData.value.lamportTimestamp.actorId) {
+                    // The keys know of this actorId, so update the value is the clock value of the timestamp is larger.
+                    if let latestKnownClock = partialResult[valueMetaData.value.lamportTimestamp.actorId],
+                       latestKnownClock < valueMetaData.value.lamportTimestamp.clock
+                    {
+                        partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
+                    }
+                } else {
+                    // The keys don't know of this actorId, so add this one as the latest value.
                     partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
                 }
-            } else {
-                // The keys don't know of this actorId, so add this one as the latest value.
-                partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
             }
+            return ORSetState(maxClockValueByActor: maxClockValueByActor)
         }
-        return ORSetState(maxClockValueByActor: maxClockValueByActor)
     }
 
     // func delta(_ state: DeltaState?) -> Delta

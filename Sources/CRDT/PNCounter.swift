@@ -61,7 +61,9 @@ extension PNCounter: DeltaCRDT {
     }
 
     public var state: PNCounterState {
-        PNCounterState(pos: pos_value, neg: neg_value)
+        get async {
+            PNCounterState(pos: pos_value, neg: neg_value)
+        }
     }
 
     public func delta(_: PNCounterState?) async -> PNCounterState {
