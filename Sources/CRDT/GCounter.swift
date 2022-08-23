@@ -37,7 +37,9 @@ extension GCounter: Replicable {
 
 extension GCounter: DeltaCRDT {
     public var state: UInt {
-        _storage
+        get async {
+            _storage
+        }
     }
 
     public func delta(_: UInt?) async -> UInt {

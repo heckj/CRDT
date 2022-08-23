@@ -93,8 +93,8 @@ final class ORSetTests: XCTestCase {
         XCTAssertEqual(b, d)
     }
 
-    func testDeltaState_state() {
-        let state = a.state
+    func testDeltaState_state() async {
+        let state = await a.state
         XCTAssertNotNil(state)
         XCTAssertEqual(Array(state.maxClockValueByActor.keys), [a.currentTimestamp.actorId])
         XCTAssertEqual(Array(state.maxClockValueByActor.values), [a.currentTimestamp.clock])

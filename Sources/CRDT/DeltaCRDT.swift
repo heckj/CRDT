@@ -9,8 +9,10 @@
 /// state to be presented from another type, which is then used to calculate the delta's needed to bring the
 /// state up to a converged status with the replica that provided the state.
 ///
-/// - SeeAlso: [Delta State Replicated Data Types](https://arxiv.org/abs/1603.01529)
-/// - SeeAlso: [Efficient Synchronization of State-based CRDTs](https://arxiv.org/pdf/1803.02750.pdf)
+/// For more information on delta state replication, review the following research papers:
+///
+/// - [Delta State Replicated Data Types](https://arxiv.org/abs/1603.01529)
+/// - [Efficient Synchronization of State-based CRDTs](https://arxiv.org/pdf/1803.02750.pdf)
 public protocol DeltaCRDT: Replicable {
     /// A type that represents minimal state needed to compute a minimal set of differences that still results in converging CRDTs.
     associatedtype DeltaState
@@ -18,7 +20,7 @@ public protocol DeltaCRDT: Replicable {
     associatedtype Delta
 
     /// The current state of the CRDT.
-    var state: DeltaState { get }
+    var state: DeltaState { get async }
 
     /// Computes and returns a diff from the current state of the CRDT to be used to update another instance.
     ///

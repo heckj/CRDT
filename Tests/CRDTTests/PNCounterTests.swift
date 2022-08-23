@@ -87,8 +87,8 @@ final class PNCounterTests: XCTestCase {
         XCTAssertEqual(a, d)
     }
 
-    func testDeltaState_state() {
-        let atom = a.state
+    func testDeltaState_state() async {
+        let atom = await a.state
         XCTAssertNotNil(atom)
         XCTAssertEqual(a.value, Int(atom.pos) - Int(atom.neg))
     }

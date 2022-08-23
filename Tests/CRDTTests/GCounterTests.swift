@@ -71,8 +71,8 @@ final class GCounterTests: XCTestCase {
         XCTAssertEqual(a, d)
     }
 
-    func testDeltaState_state() {
-        let atom = a.state
+    func testDeltaState_state() async {
+        let atom = await a.state
         XCTAssertNotNil(atom)
         XCTAssertEqual(atom, a.value)
     }

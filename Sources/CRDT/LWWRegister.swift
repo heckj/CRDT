@@ -64,7 +64,9 @@ extension LWWRegister: DeltaCRDT {
 //    public typealias DeltaState = Self.Atom
 //    public typealias Delta = Self.Atom
     public var state: Atom {
-        _storage
+        get async {
+            _storage
+        }
     }
 
     public func delta(_: Atom?) async -> Atom {

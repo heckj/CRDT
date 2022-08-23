@@ -62,7 +62,9 @@ extension GSet: DeltaCRDT {
 
     // var state: DeltaState { get }
     public var state: GSetState {
-        GSetState(values: _storage)
+        get async {
+            GSetState(values: _storage)
+        }
     }
 
     // func delta(_ state: DeltaState?) -> [Delta]
