@@ -10,24 +10,24 @@ import Foundation
 public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
     private var _storage: Set<T>
     internal var currentTimestamp: LamportTimestamp<ActorID>
-    
+
     /// The set of values.
     public var values: Set<T> {
         _storage
     }
-    
+
     /// The number of items in the set.
     public var count: Int {
         _storage.count
     }
-    
+
     /// Inserts a new value into the set.
     /// - Parameter value: The value to insert.
     public mutating func insert(_ value: T) {
         _storage.insert(value)
         currentTimestamp.tick()
     }
-    
+
     /// Returns a Boolean value that indicates whether the set contains the value you provide.
     /// - Parameter value: The value to compare.
     public func contains(_ value: T) -> Bool {
@@ -72,7 +72,7 @@ extension GSet: DeltaCRDT {
     public struct GSetState {
         let values: Set<T>
     }
-    
+
     /// A struct that represents the differences to be merged to replicate the set.
     public struct GSetDelta {
         let lamportClock: LamportTimestamp<ActorID>

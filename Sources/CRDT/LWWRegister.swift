@@ -22,7 +22,7 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
         }
 
         // MARK: Conformance of LWWRegister.Atom to PartiallyOrderable
-        
+
         /// Returns a Boolean value that indicates if the atom is less-than or equal to another atom.
         /// - Parameters:
         ///   - lhs: The first atom to compare.
@@ -36,7 +36,7 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
 
     private var _storage: Atom
     internal let selfId: ActorID
-    
+
     /// The value of the register.
     public var value: T {
         get {
