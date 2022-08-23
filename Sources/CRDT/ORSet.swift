@@ -26,29 +26,45 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
     internal var currentTimestamp: LamportTimestamp<ActorID>
     internal var metadataByValue: [T: Metadata]
 
+    /// Creates a new grow-only set..
+    /// - Parameters:
+    ///   - actorID: The identity of the collaborator for this set.
+    ///   - clock: An optional lamport clock timestamp for this set.
     public init(actorId: ActorID, clock: UInt64 = 0) {
         metadataByValue = .init()
         currentTimestamp = .init(clock: clock, actorId: actorId)
     }
 
+    /// Creates a new grow-only set..
+    /// - Parameters:
+    ///   - actorID: The identity of the collaborator for this set.
+    ///   - clock: An optional lamport clock timestamp for this set.
+    ///   - elements: An list of elements to add to the set.
     public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
         self = .init(actorId: actorId, clock: clock)
         elements.forEach { self.insert($0) }
     }
 
+    /// The set of values.
     public var values: Set<T> {
         let values = metadataByValue.filter { !$1.isDeleted }.map(\.key)
         return Set(values)
     }
 
+    /// Returns a Boolean value that indicates whether the set contains the value you provide.
+    /// - Parameter value: The value to compare.
     public func contains(_ value: T) -> Bool {
         !(metadataByValue[value]?.isDeleted ?? true)
     }
-
+    
+    /// The number of items in the set.
     public var count: Int {
         metadataByValue.filter { !$1.isDeleted }.count
     }
 
+    /// Inserts a new value into the set.
+    /// - Parameter value: The value to insert.
+    /// - Returns: A Boolean value indicating whether the value inserted was new to the set.
     @discardableResult public mutating func insert(_ value: T) -> Bool {
         currentTimestamp.tick()
 
@@ -64,7 +80,10 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
 
         return isNewInsert
     }
-
+    
+    /// Removes a value from the set.
+    /// - Parameter value: The value to remove.
+    /// - Returns: The value removed from the set, or `nil` if the value didn't exist.
     @discardableResult public mutating func remove(_ value: T) -> T? {
         let returnValue: T?
 
@@ -83,6 +102,8 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
 }
 
 extension ORSet: Replicable {
+    /// Returns a new counter by merging two counter instances.
+    /// - Parameter other: The counter to merge.
     public func merged(with other: ORSet) -> ORSet {
         var copy = self
         copy.metadataByValue = other.metadataByValue.reduce(into: metadataByValue) { result, entry in
@@ -100,19 +121,16 @@ extension ORSet: Replicable {
 }
 
 extension ORSet: DeltaCRDT {
-    //    associatedtype DeltaState
     /// The minimal state for an ORSet to compute diffs for replication.
     public struct ORSetState {
         let maxClockValueByActor: [ActorID: UInt64]
     }
 
-    //    associatedtype Delta
     /// The set of changes to bring another ORSet instance up to the same state.
     public struct ORSetDelta {
         let updates: [T: Metadata]
     }
 
-    // var state: DeltaState { get }
     /// The current state of the ORSet.
     public var state: ORSetState {
         get async {
@@ -137,7 +155,6 @@ extension ORSet: DeltaCRDT {
         }
     }
 
-    // func delta(_ state: DeltaState?) -> Delta
     /// Computes and returns a diff from the current state of the ORSet to be used to update another instance.
     ///
     /// If you don't provide a state from another ORSet instance, the returned delta represents the full state.
@@ -167,7 +184,6 @@ extension ORSet: DeltaCRDT {
         return ORSetDelta(updates: statesToReplicate)
     }
 
-    // func mergeDelta(_ delta: Delta) -> Self
     /// Returns a new instance of an ORSet with the delta you provide merged into the current ORSet.
     /// - Parameter delta: The incremental, partial state to merge.
     public func mergeDelta(_ delta: ORSetDelta) async -> Self {

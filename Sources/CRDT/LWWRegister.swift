@@ -11,7 +11,7 @@ import Foundation
 /// Based on LWWRegister implementation as described in "Convergent and Commutative Replicated Data Types"
 /// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct LWWRegister<ActorID: Hashable & Comparable, T> {
-    /// The replicated state structure for LWWRegister
+    /// A struct that represents the state of an LWWRegister
     public struct Atom {
         internal var value: T
         internal var clockId: WallclockTimestamp<ActorID>
@@ -22,7 +22,11 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
         }
 
         // MARK: Conformance of LWWRegister.Atom to PartiallyOrderable
-
+        
+        /// Returns a Boolean value that indicates if the atom is less-than or equal to another atom.
+        /// - Parameters:
+        ///   - lhs: The first atom to compare.
+        ///   - rhs: The second atom to compare.
         public static func <= (lhs: Self, rhs: Self) -> Bool {
             // functionally equivalent to say rhs instance is ordered after lhs instance
             // print("lhs \(lhs.timestamp), \(lhs.id) <=? rhs \(rhs.timestamp), \(rhs.id)")
@@ -32,7 +36,8 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
 
     private var _storage: Atom
     internal let selfId: ActorID
-
+    
+    /// The value of the register.
     public var value: T {
         get {
             _storage.value
@@ -42,6 +47,11 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
         }
     }
 
+    /// Creates a new last-write-wins register.
+    /// - Parameters:
+    ///   - value: The initial register value.
+    ///   - actorID: The identity of the collaborator for this register..
+    ///   - timestamp: An optional wall clock timestamp for this register.
     public init(_ value: T, actorID: ActorID, timestamp: TimeInterval? = nil) {
         selfId = actorID
         if let timestamp = timestamp {
@@ -53,6 +63,8 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
 }
 
 extension LWWRegister: Replicable {
+    /// Returns a new counter by merging two counter instances.
+    /// - Parameter other: The counter to merge.
     public func merged(with other: LWWRegister) -> LWWRegister {
         // ternary operator, since I can never entirely remember the sequence:
         // expression ? valueIfTrue : valueIfFalse
@@ -63,16 +75,24 @@ extension LWWRegister: Replicable {
 extension LWWRegister: DeltaCRDT {
 //    public typealias DeltaState = Self.Atom
 //    public typealias Delta = Self.Atom
+
+    /// The current state of the CRDT.
     public var state: Atom {
         get async {
             _storage
         }
     }
 
+    /// Computes and returns a diff from the current state of the counter to be used to update another instance.
+    ///
+    /// - Parameter state: The optional state of the remote CRDT.
+    /// - Returns: The changes to be merged into the counter instance that provided the state to converge its state with this instance.
     public func delta(_: Atom?) async -> Atom {
         _storage
     }
 
+    /// Returns a new instance of a register with the delta you provide merged into the current register.
+    /// - Parameter delta: The incremental, partial state to merge.
     public func mergeDelta(_ delta: Atom) async -> Self {
         var newLWW = self
         newLWW._storage = _storage <= delta ? delta : _storage
