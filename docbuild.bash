@@ -45,7 +45,7 @@ export DOCC_JSON_PRETTYPRINT=YES
      --allow-writing-to-directory ./docs \
      generate-documentation \
      --fallback-bundle-identifier com.github.heckj.CRDT \
-     --target SwiftVizScale \
+     --target CRDT \
      --output-path ./docs \
      --emit-digest \
      --disable-indexing \
