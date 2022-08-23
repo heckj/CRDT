@@ -10,6 +10,8 @@
 /// - Associative ((a -merged-> b) -merged-> c) = (a -merged-> (b -merged-> c))
 /// - Idempotent (a -merged-> a = a)
 public protocol Replicable {
+    /// Returns a new CRDT by merging two CRDT instances.
+    /// - Parameter other: The CRDT to merge.
     func merged(with other: Self) -> Self
 }
 
