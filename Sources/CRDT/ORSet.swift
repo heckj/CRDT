@@ -105,7 +105,16 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
 }
 
 extension ORSet: Replicable {
-    /// Returns a new counter by merging two counter instances.
+    /// Returns a new counter by merging two set instances.
+    ///
+    /// This merge doesn't potentially throw errors, but in some causal edge cases, you might get unexpected metadata, which could result in unexpected values.
+    ///
+    /// The merge is deterministic, but may not be perceived as accurate.
+    /// This can happen when two previously unsynchronized `ORSet` instances are merged together, both with registered values but with conflicting metadata about the state of deletion.
+    /// To catch these scenarios, merge with the ``CRDT/ORSet/mergeDelta(_:)`` method, which will throw an error in these situations.
+    ///
+    /// By comparison, this method overwrites conflicting values, by choosing whichever of the two metadata sets has the latest timestamp clock.
+    ///
     /// - Parameter other: The counter to merge.
     public func merged(with other: ORSet) -> ORSet {
         var copy = self
@@ -264,7 +273,7 @@ extension ORSet.ORSetDelta: Hashable where T: Hashable {}
 
     extension ORSet: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            let dictSize = metadataByDictKey.reduce(into: 0) { partialResult, meta in
+            let dictSize = metadataByValue.reduce(into: 0) { partialResult, meta in
                 partialResult += MemoryLayout<T>.size(ofValue: meta.key)
                 partialResult += meta.value.sizeInBytes()
             }
