@@ -10,12 +10,12 @@ An implementation of ∂-state based CRDTs (conflict-free replicated data types)
 
 This library implements well-known state-based CRDTs as swift generics, and supplies a replicator to support using CRDTs in your own data models.
 
-- [x] G-Counter (grow-only counter)
-- [x] PN-Counter (A positive-negative counter)
-- [x] LWW-Register (last write wins register)
+- [X] G-Counter (grow-only counter)
+- [X] PN-Counter (A positive-negative counter)
+- [X] LWW-Register (last write wins register)
 - [X] G-Set (grow-only set)
 - [X] OR-Set (observed-remove set, with LWW add bias)
-- [ ] OR-Map (observed-remove map, with LWW add or update bias)
+- [X] OR-Map (observed-remove map, with LWW add or update bias)
 - [ ] Replicator
 
 For more, general, information on CRDTs, see the following sites and papers:
