@@ -177,16 +177,19 @@ final class ORSetTests: XCTestCase {
             XCTAssertEqual(mergedFrom1.count, 4)
         } catch CRDTMergeError.conflictingHistory(_) {
             // print("error: \(msg)")
-            XCTFail("When merging set 1 into set 2, the value `3` should have a higher lamport timestamp, so it should merge cleanly")
+            XCTFail("When merging set 1 into set 2, the value `3` should has a higher lamport timestamp, so it should merge cleanly")
         }
 
         // merge the diff from set 2 into set 1
+
         do {
             let _ = try await orset_1.mergeDelta(diff_b)
             XCTFail("The merge didn't catch and throw on a failure due to conflicting lamport timestamps for the value `3`.")
         } catch let CRDTMergeError.conflictingHistory(msg) {
-            // print("error: \(msg)")
             XCTAssertNotNil(msg)
+            // print("error: \(msg)")
+            // Example message:
+            // The metadata for the set value 3 has conflicting timestamps. local: [[1-13], deleted: false], remote: [[1-13], deleted: false].
         }
     }
 }
