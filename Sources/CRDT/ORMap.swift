@@ -79,7 +79,7 @@ public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE: Equata
                 metadataByDictKey[key] = metadata
             } else if let oldMetadata = metadataByDictKey[key] {
                 currentTimestamp.tick()
-                var updatedMetaData = Metadata(lamportTimestamp: currentTimestamp, isDeleted: true, oldMetadata.value)
+                let updatedMetaData = Metadata(lamportTimestamp: currentTimestamp, isDeleted: true, oldMetadata.value)
                 metadataByDictKey[key] = updatedMetaData
             }
         }
@@ -87,7 +87,16 @@ public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE: Equata
 }
 
 extension ORMap: Replicable {
-    /// Returns a new counter by merging two counter instances.
+    /// Returns a new counter by merging two map instances.
+    ///
+    /// This merge doesn't potentially throw errors, but in some causal edge cases, you might get unexpected metadata, which could result in unexpected values.
+    ///
+    /// The merge is deterministic, but may not be perceived as accurate.
+    /// This can happen when two previously unsynchronized `ORMap` instances are merged together, both with registered values but with conflicting metadata about the state of deletion or of the value associated with the key.
+    /// To catch these scenarios, merge with the ``CRDT/ORMap/mergeDelta(_:)`` method, which will throw an error in these situations.
+    ///
+    /// By comparison, this method overwrites conflicting values, by choosing whichever of the two metadata sets has the latest timestamp clock.
+    ///
     /// - Parameter other: The counter to merge.
     public func merged(with other: ORMap) -> ORMap {
         var copy = self
