@@ -32,5 +32,8 @@ public protocol DeltaCRDT: Replicable {
 
     /// Returns a new instance of a CRDT with the delta you provide merged into the current CRDT.
     /// - Parameter delta: The incremental, partial state to merge.
-    func mergeDelta(_ delta: Delta) async -> Self
+    ///
+    /// CRDTs that maintain causal history for updates may throw errors if the state included within the delta you provide conflicts
+    /// with the local CRDT's history.
+    func mergeDelta(_ delta: Delta) async throws -> Self
 }
