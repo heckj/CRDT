@@ -14,6 +14,12 @@
 
 - ``CRDT/LamportTimestamp/id-3lhvv``
 - ``CRDT/LamportTimestamp/id-46idt``
+- ``CRDT/LamportTimestamp/description``
+- ``CRDT/LamportTimestamp/debugDescription``
+
+### Comparing Timestamps
+
+- ``CRDT/LamportTimestamp/_(_:_:)-699eg``
 
 ### Decoding a Timestamp
 
