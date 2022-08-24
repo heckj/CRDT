@@ -157,8 +157,10 @@ final class ORSetTests: XCTestCase {
 
     func testConflictingUnrelatedMerges() async throws {
         let orset_1 = ORSet(actorId: UInt(31), [1, 2, 3])
-        let orset_2 = ORSet(actorId: UInt(13), [3, 4])
-        // the metadata for the entry for `3` is going to be in conflict.
+        var orset_2 = ORSet(actorId: UInt(13), [3, 4])
+        orset_2.remove(3)
+        // the metadata for the entry for `3` is going to be in conflict, both by
+        // lamport timestamps ('2' vs '3') and the metadata in question (deleted vs not)
 
         let diff_a = await orset_1.delta(await orset_2.state)
         // diff_a is the delta from set 1
@@ -189,7 +191,65 @@ final class ORSetTests: XCTestCase {
             XCTAssertNotNil(msg)
             // print("error: \(msg)")
             // Example message:
-            // The metadata for the set value 3 has conflicting timestamps. local: [[1-13], deleted: false], remote: [[1-13], deleted: false].
+            // The metadata for the set value 3 has conflicting timestamps. local: [[3-31], deleted: false], remote: [[3-13], deleted: true].
         }
+    }
+    
+    func testMergeCausalUpdateMerge() async throws {
+        var orset_1 = ORSet<UInt, Int>(actorId: UInt(31), [1, 2, 3])
+        var orset_2 = ORSet<UInt, Int>(actorId: UInt(13))
+        XCTAssertEqual(orset_1.count, 3)
+        XCTAssertEqual(orset_2.count, 0)
+        
+        let replicatedDeltaFromInitial1 = await orset_1.delta(await orset_2.state)
+        // diff_a is the delta from set 1
+        XCTAssertNotNil(replicatedDeltaFromInitial1)
+        XCTAssertEqual(replicatedDeltaFromInitial1.updates.count, 3)
+
+        // overwrite orset_2 with the version merged with 1
+        orset_2 = try await orset_2.mergeDelta(replicatedDeltaFromInitial1)
+        XCTAssertEqual(orset_2.count, 3)
+        XCTAssertEqual(orset_2.values, orset_1.values)
+        
+        // Update the first and second independently with the same 'causal' ordering and values
+        orset_2.insert(4)
+        orset_1.insert(4)
+        XCTAssertEqual(orset_1.count, 4)
+        XCTAssertEqual(orset_2.count, 4)
+
+        // check the delta's in both directions:
+        let replicatedDeltaFrom1 = await orset_1.delta(await orset_2.state)
+        let replicatedDeltaFrom2 = await orset_2.delta(await orset_1.state)
+        
+        XCTAssertNotNil(replicatedDeltaFrom1)
+        XCTAssertNotNil(replicatedDeltaFrom2)
+        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
+        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
+
+        // This *should* be a legit merge, since the metadata isn't in conflict.
+        do {
+            orset_2 = try await orset_2.mergeDelta(replicatedDeltaFrom1)
+            orset_1 = try await orset_1.mergeDelta(replicatedDeltaFrom2)
+        } catch {
+            print(error)
+            XCTFail()
+        }
+        XCTAssertEqual(orset_2.values, orset_1.values)
+//        print(orset_1)
+//        ORSet<UInt, Int>(currentTimestamp: LamportTimestamp<4, 31>,
+//             metadataByValue: [
+//                1: [[1-31], deleted: false],
+//                2: [[2-31], deleted: false],
+//                3: [[3-31], deleted: false],
+//                4: [[4-31], deleted: false]
+//             ])
+//        print(orset_2)
+//        ORSet<UInt, Int>(currentTimestamp: LamportTimestamp<1, 13>,
+//             metadataByValue: [
+//                1: [[1-31], deleted: false],
+//                2: [[2-31], deleted: false],
+//                3: [[3-31], deleted: false],
+//                4: [[4-31], deleted: false]
+//             ])
     }
 }
