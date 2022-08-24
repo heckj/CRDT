@@ -13,9 +13,12 @@ import Foundation
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368)
 public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
-    internal struct Metadata {
+    internal struct Metadata: CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
+        var description: String {
+            "[\(lamportTimestamp), deleted: \(isDeleted)]"
+        }
 
         init(lamportTimestamp: LamportTimestamp<ActorID>) {
             isDeleted = false
@@ -201,9 +204,13 @@ extension ORSet: DeltaCRDT {
             // Check to see if we already have this entry in our set...
             if let localLamportStampForValue = copy.metadataByValue[valueKey]?.lamportTimestamp {
                 if metadata.lamportTimestamp <= localLamportStampForValue {
-                    let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(metadata.lamportTimestamp), remote: \(metadata)."
+                    let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(metadata), remote: \(metadata)."
                     throw CRDTMergeError.conflictingHistory(msg)
                 } else {
+                    // The incoming delta includes a key we already have, but the lamport timestamp is newer
+                    // than the version we're tracking, so update the metadata with the remote's timestamp.
+                    // This can happen when the metadata is updated, for example when a value is marked as
+                    // deleted, by a remote CRDT.
                     copy.metadataByValue[valueKey] = metadata
                 }
             } else {
