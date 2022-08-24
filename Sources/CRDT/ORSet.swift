@@ -133,6 +133,20 @@ extension ORSet: Replicable {
 }
 
 extension ORSet: DeltaCRDT {
+    // NOTE(heckj): IMPLEMENTATION DETAILS
+    //  - You may note that this implementation is nearly identical to ORMap's conformance methods.
+    //
+    //     This is intentional!
+    //
+    // Let me explain: While it pains me a bit to replicate all this code, nearly identically, there
+    // are some *very small* differences in the implementations due to the fact that the base type has
+    // differently structured metadata. Since the additional of this metadata *also* effects the
+    // generic type structure, I didn't see any easy way to pull out some of this code, and in the end
+    // just decided to replicate the whole kit.
+    //
+    // That said, if you find and fix a bug in these protocol conformance methods, PLEASE double check
+    // the peer implementation in `ORMap.swift` and fix any issues there as well.
+
     /// The minimal state for an ORSet to compute diffs for replication.
     public struct ORSetState {
         let maxClockValueByActor: [ActorID: UInt64]
@@ -212,25 +226,26 @@ extension ORSet: DeltaCRDT {
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
             if let localMetadata = copy.metadataByValue[valueKey] {
-                if metadata.lamportTimestamp <= localMetadata.lamportTimestamp {
+                if metadata.lamportTimestamp.clock <= localMetadata.lamportTimestamp.clock,
+                   metadata.isDeleted != localMetadata.isDeleted
+                {
                     // The remote delta is providing a timestamp equal to, or earlier than, our own.
                     // Check to see if the metadata matches, and if so. If it does, then ignore this value and
                     // leave things alone, as it could be identical causal updates, which shouldn't fail to merge.
                     // If the metadata is in conflict, then throw an error since the history for this value conflicts.
-                    if !metadata.isDeleted == localMetadata.isDeleted {
-                        let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(localMetadata), remote: \(metadata)."
-                        throw CRDTMergeError.conflictingHistory(msg)
-                    }
-                    // The metadata is identical for the value, only the Lamport timestamp is in conflict.
-                    // If the timestamp from the incoming value being merged is more recent, then we should
+                    let msg = "The metadata for the set value of \(valueKey) has conflicting metadata. local: \(localMetadata), remote: \(metadata)."
+                    throw CRDTMergeError.conflictingHistory(msg)
+                } else if metadata.lamportTimestamp.clock > localMetadata.lamportTimestamp.clock,
+                          metadata.isDeleted == localMetadata.isDeleted
+                {
+                    // The metadata is identical for the value, only the Lamport timestamp clock value is in conflict.
+                    // If the timestamp from the incoming value being merged is more recent, then we
                     // overwrite our timestamp value. Not doing "so should be safe", but could mean extra "diff"
                     // values being propagated over consecutive merges.
-                    if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
-                        copy.metadataByValue[valueKey] = metadata
-                    }
+                    copy.metadataByValue[valueKey] = metadata
                 } else {
-                    // The incoming delta includes a key we already have, but the Lamport timestamp is newer
-                    // than the version we're tracking, so update the metadata with the remote's timestamp.
+                    // The incoming delta includes a key we already have, but the Lamport timestamp clock value
+                    // is newer than the version we're tracking, so update the metadata with the remote's timestamp.
                     // This can happen when the metadata is updated, for example when a value is marked as
                     // deleted, by a remote CRDT.
                     copy.metadataByValue[valueKey] = metadata
