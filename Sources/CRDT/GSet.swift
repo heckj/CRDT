@@ -39,7 +39,7 @@ public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
-    ///   - clock: An optional lamport clock timestamp for this set.
+    ///   - clock: An optional Lamport clock timestamp for this set.
     public init(actorId: ActorID, clock: UInt64 = 0) {
         currentTimestamp = LamportTimestamp(clock: clock, actorId: actorId)
         _storage = Set<T>()
@@ -48,7 +48,7 @@ public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
-    ///   - clock: An optional lamport clock timestamp for this set.
+    ///   - clock: An optional Lamport clock timestamp for this set.
     ///   - elements: An list of elements to add to the set.
     public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
         self = .init(actorId: actorId, clock: clock)

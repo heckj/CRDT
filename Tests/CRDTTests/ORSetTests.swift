@@ -160,7 +160,7 @@ final class ORSetTests: XCTestCase {
         var orset_2 = ORSet(actorId: UInt(13), [3, 4])
         orset_2.remove(3)
         // the metadata for the entry for `3` is going to be in conflict, both by
-        // lamport timestamps ('2' vs '3') and the metadata in question (deleted vs not)
+        // Lamport timestamps ('2' vs '3') and the metadata in question (deleted vs not)
 
         let diff_a = await orset_1.delta(await orset_2.state)
         // diff_a is the delta from set 1
@@ -179,14 +179,14 @@ final class ORSetTests: XCTestCase {
             XCTAssertEqual(mergedFrom1.count, 4)
         } catch CRDTMergeError.conflictingHistory(_) {
             // print("error: \(msg)")
-            XCTFail("When merging set 1 into set 2, the value `3` should has a higher lamport timestamp, so it should merge cleanly")
+            XCTFail("When merging set 1 into set 2, the value `3` should has a higher Lamport timestamp, so it should merge cleanly")
         }
 
         // merge the diff from set 2 into set 1
 
         do {
             let _ = try await orset_1.mergeDelta(diff_b)
-            XCTFail("The merge didn't catch and throw on a failure due to conflicting lamport timestamps for the value `3`.")
+            XCTFail("The merge didn't catch and throw on a failure due to conflicting Lamport timestamps for the value `3`.")
         } catch let CRDTMergeError.conflictingHistory(msg) {
             XCTAssertNotNil(msg)
             // print("error: \(msg)")

@@ -29,7 +29,7 @@ public struct WallclockTimestamp<ActorID: Hashable & Comparable>: Identifiable, 
         (lhs.clock, lhs.id) < (rhs.clock, rhs.id)
     }
 
-    /// Create a new lamport timestamp with the actor identity you provide.
+    /// Create a new Lamport timestamp with the actor identity you provide.
     /// - Parameters:
     ///   - clock: An optional initial clock value, that otherwise defaults to a value determined by the current time.
     ///   - actorId: The actor identity for the timestamp.

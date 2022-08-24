@@ -11,38 +11,38 @@ import Foundation
 /// The implementation is based on "An Optimized Conflict-free Replicated Set" by
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368).
-public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE> {
+public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE: Equatable> {
     internal struct Metadata: CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
         var value: VALUE
         var description: String {
-            "[\(lamportTimestamp), deleted: \(isDeleted)]"
+            "[\(lamportTimestamp), deleted: \(isDeleted), value: \(value)]"
         }
         
-        init(lamportTimestamp: LamportTimestamp<ActorID>, _ val: VALUE) {
-            isDeleted = false
+        init(lamportTimestamp: LamportTimestamp<ActorID>, isDeleted: Bool = false, _ val: VALUE) {
             self.lamportTimestamp = lamportTimestamp
+            self.isDeleted = isDeleted
             value = val
         }
     }
     
     internal var currentTimestamp: LamportTimestamp<ActorID>
-    internal var metadataByValue: [KEY: Metadata]
+    internal var metadataByDictKey: [KEY: Metadata]
     
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
-    ///   - clock: An optional lamport clock timestamp for this set.
+    ///   - clock: An optional Lamport clock timestamp for this set.
     public init(actorId: ActorID, clock: UInt64 = 0) {
-        metadataByValue = .init()
+        metadataByDictKey = .init()
         currentTimestamp = .init(clock: clock, actorId: actorId)
     }
     
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
-    ///   - clock: An optional lamport clock timestamp for this set.
+    ///   - clock: An optional Lamport clock timestamp for this set.
     ///   - elements: An list of elements to add to the set.
     public init(actorId: ActorID, clock: UInt64 = 0, _ kvPairs: [KEY:VALUE]) {
         self = .init(actorId: actorId, clock: clock)
@@ -53,22 +53,22 @@ public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE> {
     
     /// The set of keys.
     public var keys: [KEY] {
-        metadataByValue.filter { !$1.isDeleted }.map(\.key)
+        metadataByDictKey.filter { !$1.isDeleted }.map(\.key)
     }
 
     /// The set of values.
     public var values: [VALUE] {
-        metadataByValue.filter { !$1.isDeleted }.map(\.value.value)
+        metadataByDictKey.filter { !$1.isDeleted }.map(\.value.value)
     }
 
     /// The number of items in the set.
     public var count: Int {
-        metadataByValue.filter { !$1.isDeleted }.count
+        metadataByDictKey.filter { !$1.isDeleted }.count
     }
     
     public subscript(key: KEY) -> VALUE? {
         get {
-            guard let container = metadataByValue[key], !container.isDeleted else { return nil }
+            guard let container = metadataByDictKey[key], !container.isDeleted else { return nil }
             return container.value
         }
         
@@ -76,12 +76,11 @@ public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE> {
             if let newValue = newValue {
                 currentTimestamp.tick()
                 let metadata = Metadata(lamportTimestamp: currentTimestamp, newValue)
-                metadataByValue[key] = metadata
-            } else if let oldMetadata = metadataByValue[key] {
+                metadataByDictKey[key] = metadata
+            } else if let oldMetadata = metadataByDictKey[key] {
                 currentTimestamp.tick()
-                var updatedMetaData = Metadata(lamportTimestamp: currentTimestamp, oldMetadata.value)
-                updatedMetaData.isDeleted = true
-                metadataByValue[key] = updatedMetaData
+                var updatedMetaData = Metadata(lamportTimestamp: currentTimestamp, isDeleted: true, oldMetadata.value)
+                metadataByDictKey[key] = updatedMetaData
             }
         }
     }
@@ -92,7 +91,7 @@ extension ORMap: Replicable {
     /// - Parameter other: The counter to merge.
     public func merged(with other: ORMap) -> ORMap {
         var copy = self
-        copy.metadataByValue = other.metadataByValue.reduce(into: metadataByValue) { result, entry in
+        copy.metadataByDictKey = other.metadataByDictKey.reduce(into: metadataByDictKey) { result, entry in
             let firstMetadata = result[entry.key]
             let secondMetadata = entry.value
             if let firstMetadata = firstMetadata {
@@ -123,12 +122,12 @@ extension ORMap: DeltaCRDT {
             // The composed, compressed state to compare consists of a list of all the collaborators (represented
             // by the actorId in the LamportTimestamps) with their highest value for clock.
             var maxClockValueByActor: [ActorID: UInt64]
-            maxClockValueByActor = metadataByValue.reduce(into: [:]) { partialResult, valueMetaData in
+            maxClockValueByActor = metadataByDictKey.reduce(into: [:]) { partialResult, valueMetaData in
                 // Do the accumulated keys already reference an actorID from our CRDT?
                 if partialResult.keys.contains(valueMetaData.value.lamportTimestamp.actorId) {
                     // Our local CRDT knows of this actorId, so only include the value if the
-                    // lamport clock of the local data element's timestamp is larger than the accumulated
-                    // lamport clock for the actorId.
+                    // Lamport clock of the local data element's timestamp is larger than the accumulated
+                    // Lamport clock for the actorId.
                     if let latestKnownClock = partialResult[valueMetaData.value.lamportTimestamp.actorId],
                        latestKnownClock < valueMetaData.value.lamportTimestamp.clock
                     {
@@ -136,7 +135,7 @@ extension ORMap: DeltaCRDT {
                     }
                 } else {
                     // The local CRDT doesn't know about this actorId, so add it to the outgoing state being
-                    // accumulated into partialResult, including the current lamport clock value as the current
+                    // accumulated into partialResult, including the current Lamport clock value as the current
                     // latest value. If there is more than one entry by this actorId, the if check above this
                     // updates the timestamp to any later values.
                     partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
@@ -155,14 +154,14 @@ extension ORMap: DeltaCRDT {
     public func delta(_ otherInstanceState: ORMapState?) async -> ORMapDelta {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxClockValueByActor: [ActorID: UInt64] = otherInstanceState?.maxClockValueByActor else {
-            return ORMapDelta(updates: metadataByValue)
+            return ORMapDelta(updates: metadataByDictKey)
         }
         // The state of a remote instance has been provided to us as a list of actorIds and max clock values.
         var statesToReplicate: [KEY: Metadata]
 
         // To determine the changes that need to be replicated to the instance that provided the state:
         // Iterate through the local collection:
-        statesToReplicate = metadataByValue.reduce(into: [:]) { partialResult, keyMetaData in
+        statesToReplicate = metadataByDictKey.reduce(into: [:]) { partialResult, keyMetaData in
             // - If there are actorIds in our CRDT that the incoming state doesn't list, include those values
             // in the delta. It means the remote CRDT hasn't seen the collaborator that the actorId represents.
             if !maxClockValueByActor.keys.contains(keyMetaData.value.lamportTimestamp.actorId) {
@@ -185,33 +184,33 @@ extension ORMap: DeltaCRDT {
         var copy = self
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
-            if let localMetadata = copy.metadataByValue[valueKey] {
+            if let localMetadata = copy.metadataByDictKey[valueKey] {
                 if metadata.lamportTimestamp <= localMetadata.lamportTimestamp {
                     // The remote delta is providing a timestamp equal to, or earlier than, our own.
                     // Check to see if the metadata matches, and if so. If it does, then ignore this value and
                     // leave things alone, as it could be identical causal updates, which shouldn't fail to merge.
                     // If the metadata is in conflict, then throw an error since the history for this value conflicts.
-                    if !metadata.isDeleted == localMetadata.isDeleted {
-                        let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(localMetadata), remote: \(metadata)."
+                    if !(metadata.isDeleted == localMetadata.isDeleted && metadata.value == metadata.value)  {
+                        let msg = "The metadata for the set value \(valueKey) is conflicting. local: \(localMetadata), remote: \(metadata)."
                         throw CRDTMergeError.conflictingHistory(msg)
                     }
-                    // The metadata is identical for the value, only the lamport timestamp is in conflict.
+                    // The metadata is identical for the value, only the Lamport timestamp is in conflict.
                     // If the timestamp from the incoming value being merged is more recent, then we should
                     // overwrite our timestamp value. Not doing "so should be safe", but could mean extra "diff"
-                    // values being propogated over consecutive merges.
+                    // values being propagated over consecutive merges.
                     if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
-                        copy.metadataByValue[valueKey] = metadata
+                        copy.metadataByDictKey[valueKey] = metadata
                     }
                 } else {
-                    // The incoming delta includes a key we already have, but the lamport timestamp is newer
+                    // The incoming delta includes a key we already have, but the Lamport timestamp is newer
                     // than the version we're tracking, so update the metadata with the remote's timestamp.
                     // This can happen when the metadata is updated, for example when a value is marked as
                     // deleted, by a remote CRDT.
-                    copy.metadataByValue[valueKey] = metadata
+                    copy.metadataByDictKey[valueKey] = metadata
                 }
             } else {
                 // We don't have this entry, so copy it into place with the metadata from the delta.
-                copy.metadataByValue[valueKey] = metadata
+                copy.metadataByDictKey[valueKey] = metadata
             }
             // If the remote values have a more recent clock value for this actor instance,
             // increment the clock.
@@ -247,7 +246,7 @@ extension ORMap.ORMapDelta: Hashable where KEY: Hashable, VALUE: Hashable {}
 
     extension ORMap: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            let dictSize = metadataByValue.reduce(into: 0) { partialResult, meta in
+            let dictSize = metadataByDictKey.reduce(into: 0) { partialResult, meta in
                 partialResult += MemoryLayout<KEY>.size(ofValue: meta.key)
                 partialResult += meta.value.sizeInBytes()
             }
