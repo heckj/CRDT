@@ -19,17 +19,17 @@ public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE: Equata
         var description: String {
             "[\(lamportTimestamp), deleted: \(isDeleted), value: \(value)]"
         }
-        
+
         init(lamportTimestamp: LamportTimestamp<ActorID>, isDeleted: Bool = false, _ val: VALUE) {
             self.lamportTimestamp = lamportTimestamp
             self.isDeleted = isDeleted
             value = val
         }
     }
-    
+
     internal var currentTimestamp: LamportTimestamp<ActorID>
     internal var metadataByDictKey: [KEY: Metadata]
-    
+
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
@@ -38,19 +38,19 @@ public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE: Equata
         metadataByDictKey = .init()
         currentTimestamp = .init(clock: clock, actorId: actorId)
     }
-    
+
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
     ///   - clock: An optional Lamport clock timestamp for this set.
     ///   - elements: An list of elements to add to the set.
-    public init(actorId: ActorID, clock: UInt64 = 0, _ kvPairs: [KEY:VALUE]) {
+    public init(actorId: ActorID, clock: UInt64 = 0, _ kvPairs: [KEY: VALUE]) {
         self = .init(actorId: actorId, clock: clock)
         for x in kvPairs {
             self[x.key] = x.value
         }
     }
-    
+
     /// The set of keys.
     public var keys: [KEY] {
         metadataByDictKey.filter { !$1.isDeleted }.map(\.key)
@@ -65,13 +65,13 @@ public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE: Equata
     public var count: Int {
         metadataByDictKey.filter { !$1.isDeleted }.count
     }
-    
+
     public subscript(key: KEY) -> VALUE? {
         get {
             guard let container = metadataByDictKey[key], !container.isDeleted else { return nil }
             return container.value
         }
-        
+
         set(newValue) {
             if let newValue = newValue {
                 currentTimestamp.tick()
@@ -115,6 +115,20 @@ extension ORMap: Replicable {
 }
 
 extension ORMap: DeltaCRDT {
+    // NOTE(heckj): IMPLEMENTATION DETAILS
+    //  - You may note that this implementation is nearly identical to ORSet's conformance methods.
+    //
+    //     This is intentional!
+    //
+    // Let me explain: While it pains me a bit to replicate all this code, nearly identically, there
+    // are some *very small* differences in the implementations due to the fact that the base type has
+    // differently structured metadata. Since the additional of this metadata *also* effects the
+    // generic type structure, I didn't see any easy way to pull out some of this code, and in the end
+    // just decided to replicate the whole kit.
+    //
+    // That said, if you find and fix a bug in these protocol conformance methods, PLEASE double check
+    // the peer implementation in `ORSet.swift` and fix any issues there as well.
+
     /// The minimal state for an ORSet to compute diffs for replication.
     public struct ORMapState {
         let maxClockValueByActor: [ActorID: UInt64]
@@ -194,25 +208,27 @@ extension ORMap: DeltaCRDT {
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
             if let localMetadata = copy.metadataByDictKey[valueKey] {
-                if metadata.lamportTimestamp <= localMetadata.lamportTimestamp {
+                if metadata.lamportTimestamp.clock <= localMetadata.lamportTimestamp.clock,
+                   metadata.isDeleted != localMetadata.isDeleted || metadata.value != metadata.value
+                {
                     // The remote delta is providing a timestamp equal to, or earlier than, our own.
                     // Check to see if the metadata matches, and if so. If it does, then ignore this value and
                     // leave things alone, as it could be identical causal updates, which shouldn't fail to merge.
                     // If the metadata is in conflict, then throw an error since the history for this value conflicts.
-                    if !(metadata.isDeleted == localMetadata.isDeleted && metadata.value == metadata.value)  {
-                        let msg = "The metadata for the set value \(valueKey) is conflicting. local: \(localMetadata), remote: \(metadata)."
-                        throw CRDTMergeError.conflictingHistory(msg)
-                    }
-                    // The metadata is identical for the value, only the Lamport timestamp is in conflict.
-                    // If the timestamp from the incoming value being merged is more recent, then we should
+                    let msg = "The metadata for the map key \(valueKey) is conflicting. local: \(localMetadata), remote: \(metadata)."
+                    throw CRDTMergeError.conflictingHistory(msg)
+                } else if metadata.lamportTimestamp.clock > localMetadata.lamportTimestamp.clock,
+                          metadata.isDeleted == localMetadata.isDeleted,
+                          metadata.value == metadata.value
+                {
+                    // The metadata is identical for the value, only the Lamport timestamp clock value is in conflict.
+                    // If the timestamp from the incoming value being merged is more recent, then we
                     // overwrite our timestamp value. Not doing "so should be safe", but could mean extra "diff"
                     // values being propagated over consecutive merges.
-                    if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
-                        copy.metadataByDictKey[valueKey] = metadata
-                    }
+                    copy.metadataByDictKey[valueKey] = metadata
                 } else {
-                    // The incoming delta includes a key we already have, but the Lamport timestamp is newer
-                    // than the version we're tracking, so update the metadata with the remote's timestamp.
+                    // The incoming delta includes a key we already have, but the Lamport timestamp clock value
+                    // is newer than the version we're tracking, so update the metadata with the remote's timestamp.
                     // This can happen when the metadata is updated, for example when a value is marked as
                     // deleted, by a remote CRDT.
                     copy.metadataByDictKey[valueKey] = metadata

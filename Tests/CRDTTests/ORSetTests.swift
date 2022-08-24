@@ -175,11 +175,24 @@ final class ORSetTests: XCTestCase {
         // merge the diff from set 1 into set 2
 
         do {
-            let mergedFrom1 = try await orset_2.mergeDelta(diff_a)
-            XCTAssertEqual(mergedFrom1.count, 4)
-        } catch CRDTMergeError.conflictingHistory(_) {
-            // print("error: \(msg)")
+//            print(orset_2)
+//            ORSet<UInt, Int>(
+//                currentTimestamp: LamportTimestamp<3, 13>,
+//                metadataByValue: [
+//                    4: [[2-13], deleted: false],
+//                    3: [[3-13], deleted: true]
+//                ])
+//            print(diff_a)
+//            ORSetDelta(updates: [
+//                1: [[1-31], deleted: false],
+//                3: [[3-31], deleted: false],
+//                2: [[2-31], deleted: false]
+//            ])
+            let _ = try await orset_2.mergeDelta(diff_a)
             XCTFail("When merging set 1 into set 2, the value `3` should has a higher Lamport timestamp, so it should merge cleanly")
+        } catch let CRDTMergeError.conflictingHistory(msg) {
+            // print("error: \(msg)")
+            XCTAssertNotNil(msg)
         }
 
         // merge the diff from set 2 into set 1
