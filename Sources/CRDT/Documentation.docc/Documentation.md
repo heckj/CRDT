@@ -38,12 +38,18 @@ For more information on CRDTs and their algorithms, see the [CRDT.tech website](
 - ``CRDT/GSet``
 - ``CRDT/ORSet``
 
-### Supporting Types
+### Timestamps
 
 - ``CRDT/LamportTimestamp``
 - ``CRDT/WallclockTimestamp``
 
+### Replication Protocols
+
 - ``CRDT/Replicable``
 - ``CRDT/PartiallyOrderable``
 - ``CRDT/DeltaCRDT``
+- ``CRDT/CRDTMergeError``
+
+### Debugging and Optimization Protocols
+
 - ``CRDT/ApproxSizeable``

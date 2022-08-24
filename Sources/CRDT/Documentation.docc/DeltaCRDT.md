@@ -15,3 +15,4 @@
 ### Merging the delta to replicate a CRDT
 
 - ``CRDT/DeltaCRDT/mergeDelta(_:)``
+- ``CRDT/CRDTMergeError``

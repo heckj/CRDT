@@ -114,25 +114,25 @@ final class ORSetTests: XCTestCase {
         XCTAssertEqual(a_delta.updates, a.metadataByValue)
     }
 
-    func testDeltaState_mergeDeltas() async {
+    func testDeltaState_mergeDeltas() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
         let delta = await b.delta(a.state)
-        let c = await a.mergeDelta(delta)
+        let c = try await a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
 
-    func testDeltaState_mergeDelta() async {
+    func testDeltaState_mergeDelta() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
         let delta = await b.delta(a.state)
-        let c = await a.mergeDelta(delta)
+        let c = try await a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
 
-    func testUnrelatedMerges() async {
+    func testUnrelatedMerges() async throws {
         let orset_1 = ORSet(actorId: UInt(31), [1, 2, 3, 4])
-        let orset_2 = ORSet(actorId: UInt(13), [4, 5])
+        let orset_2 = ORSet(actorId: UInt(13), [5, 6])
 
         let diff_a = await orset_1.delta(await orset_2.state)
         // diff_a is the delta from set 1
@@ -145,13 +145,48 @@ final class ORSetTests: XCTestCase {
         XCTAssertEqual(diff_b.updates.count, 2)
 
         // merge the diff from set 1 into set 2
-        let mergedFrom1 = await orset_2.mergeDelta(diff_a)
-        XCTAssertEqual(mergedFrom1.count, 5)
+        let mergedFrom1 = try await orset_2.mergeDelta(diff_a)
+        XCTAssertEqual(mergedFrom1.count, 6)
 
         // merge the diff from set 2 into set 1
-        let mergedFrom2 = await orset_1.mergeDelta(diff_b)
-        XCTAssertEqual(mergedFrom2.count, 5)
+        let mergedFrom2 = try await orset_1.mergeDelta(diff_b)
+        XCTAssertEqual(mergedFrom2.count, 6)
 
         XCTAssertEqual(mergedFrom1.values, mergedFrom2.values)
+    }
+
+    func testConflictingUnrelatedMerges() async throws {
+        let orset_1 = ORSet(actorId: UInt(31), [1, 2, 3])
+        let orset_2 = ORSet(actorId: UInt(13), [3, 4])
+        // the metadata for the entry for `3` is going to be in conflict.
+
+        let diff_a = await orset_1.delta(await orset_2.state)
+        // diff_a is the delta from set 1
+        XCTAssertNotNil(diff_a)
+        XCTAssertEqual(diff_a.updates.count, 3)
+
+        let diff_b = await orset_2.delta(await orset_1.state)
+        // diff_b is the delta from set 2
+        XCTAssertNotNil(diff_b)
+        XCTAssertEqual(diff_b.updates.count, 2)
+
+        // merge the diff from set 1 into set 2
+
+        do {
+            let mergedFrom1 = try await orset_2.mergeDelta(diff_a)
+            XCTAssertEqual(mergedFrom1.count, 4)
+        } catch CRDTMergeError.conflictingHistory(_) {
+            // print("error: \(msg)")
+            XCTFail("When merging set 1 into set 2, the value `3` should have a higher lamport timestamp, so it should merge cleanly")
+        }
+
+        // merge the diff from set 2 into set 1
+        do {
+            let _ = try await orset_1.mergeDelta(diff_b)
+            XCTFail("The merge didn't catch and throw on a failure due to conflicting lamport timestamps for the value `3`.")
+        } catch let CRDTMergeError.conflictingHistory(msg) {
+            // print("error: \(msg)")
+            XCTAssertNotNil(msg)
+        }
     }
 }
