@@ -201,7 +201,7 @@ extension ORSet: DeltaCRDT {
             // Check to see if we already have this entry in our set...
             if let localLamportStampForValue = copy.metadataByValue[valueKey]?.lamportTimestamp {
                 if metadata.lamportTimestamp <= localLamportStampForValue {
-                    let msg = "The metadata for the set value \(valueKey) has conflicting lamport timestamps."
+                    let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(metadata.lamportTimestamp), remote: \(metadata)."
                     throw CRDTMergeError.conflictingHistory(msg)
                 } else {
                     copy.metadataByValue[valueKey] = metadata
