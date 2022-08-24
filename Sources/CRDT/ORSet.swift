@@ -4,7 +4,7 @@
 
 import Foundation
 
-/// Observed-Remove Set.
+/// An Observed-Remove Set.
 ///
 /// The `ORSet` can add and remove items from the set, compared to a ``GSet``, which can only add.
 /// This is more powerful than the `GSet`, but has extra storage costs.

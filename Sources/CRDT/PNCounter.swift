@@ -4,9 +4,11 @@
 
 import Foundation
 
-/// Implements a Positive-Negative Counter
-/// Based on GCounter implementation as described in "Convergent and Commutative Replicated Data Types"
-/// - SeeAlso: [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
+/// A Positive-Negative Counter.
+///
+/// The `PNCounter` implementation is based on the PN Counter as described
+/// [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
+/// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct PNCounter<ActorID: Hashable & Comparable> {
     internal var pos_value: UInt
     internal var neg_value: UInt

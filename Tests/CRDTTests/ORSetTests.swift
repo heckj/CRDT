@@ -194,13 +194,13 @@ final class ORSetTests: XCTestCase {
             // The metadata for the set value 3 has conflicting timestamps. local: [[3-31], deleted: false], remote: [[3-13], deleted: true].
         }
     }
-    
+
     func testMergeCausalUpdateMerge() async throws {
         var orset_1 = ORSet<UInt, Int>(actorId: UInt(31), [1, 2, 3])
         var orset_2 = ORSet<UInt, Int>(actorId: UInt(13))
         XCTAssertEqual(orset_1.count, 3)
         XCTAssertEqual(orset_2.count, 0)
-        
+
         let replicatedDeltaFromInitial1 = await orset_1.delta(await orset_2.state)
         // diff_a is the delta from set 1
         XCTAssertNotNil(replicatedDeltaFromInitial1)
@@ -210,7 +210,7 @@ final class ORSetTests: XCTestCase {
         orset_2 = try await orset_2.mergeDelta(replicatedDeltaFromInitial1)
         XCTAssertEqual(orset_2.count, 3)
         XCTAssertEqual(orset_2.values, orset_1.values)
-        
+
         // Update the first and second independently with the same 'causal' ordering and values
         orset_2.insert(4)
         orset_1.insert(4)
@@ -220,7 +220,7 @@ final class ORSetTests: XCTestCase {
         // check the delta's in both directions:
         let replicatedDeltaFrom1 = await orset_1.delta(await orset_2.state)
         let replicatedDeltaFrom2 = await orset_2.delta(await orset_1.state)
-        
+
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)
         XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
