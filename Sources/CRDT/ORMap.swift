@@ -11,23 +11,25 @@ import Foundation
 /// The implementation is based on "An Optimized Conflict-free Replicated Set" by
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368).
-public struct ORMap<ActorID: Hashable & Comparable, T: Hashable> {
+public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE> {
     internal struct Metadata: CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
+        var value: VALUE
         var description: String {
             "[\(lamportTimestamp), deleted: \(isDeleted)]"
         }
-
-        init(lamportTimestamp: LamportTimestamp<ActorID>) {
+        
+        init(lamportTimestamp: LamportTimestamp<ActorID>, _ val: VALUE) {
             isDeleted = false
             self.lamportTimestamp = lamportTimestamp
+            value = val
         }
     }
-
+    
     internal var currentTimestamp: LamportTimestamp<ActorID>
-    internal var metadataByValue: [T: Metadata]
-
+    internal var metadataByValue: [KEY: Metadata]
+    
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
@@ -36,70 +38,52 @@ public struct ORMap<ActorID: Hashable & Comparable, T: Hashable> {
         metadataByValue = .init()
         currentTimestamp = .init(clock: clock, actorId: actorId)
     }
-
+    
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
     ///   - clock: An optional lamport clock timestamp for this set.
     ///   - elements: An list of elements to add to the set.
-    public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
+    public init(actorId: ActorID, clock: UInt64 = 0, _ kvPairs: [KEY:VALUE]) {
         self = .init(actorId: actorId, clock: clock)
-        elements.forEach { self.insert($0) }
+        for x in kvPairs {
+            self[x.key] = x.value
+        }
+    }
+    
+    /// The set of keys.
+    public var keys: [KEY] {
+        metadataByValue.filter { !$1.isDeleted }.map(\.key)
     }
 
     /// The set of values.
-    public var values: Set<T> {
-        let values = metadataByValue.filter { !$1.isDeleted }.map(\.key)
-        return Set(values)
-    }
-
-    /// Returns a Boolean value that indicates whether the set contains the value you provide.
-    /// - Parameter value: The value to compare.
-    public func contains(_ value: T) -> Bool {
-        !(metadataByValue[value]?.isDeleted ?? true)
+    public var values: [VALUE] {
+        metadataByValue.filter { !$1.isDeleted }.map(\.value.value)
     }
 
     /// The number of items in the set.
     public var count: Int {
         metadataByValue.filter { !$1.isDeleted }.count
     }
-
-    /// Inserts a new value into the set.
-    /// - Parameter value: The value to insert.
-    /// - Returns: A Boolean value indicating whether the value inserted was new to the set.
-    @discardableResult public mutating func insert(_ value: T) -> Bool {
-        currentTimestamp.tick()
-
-        let metadata = Metadata(lamportTimestamp: currentTimestamp)
-        let isNewInsert: Bool
-
-        if let oldMetadata = metadataByValue[value] {
-            isNewInsert = oldMetadata.isDeleted
-        } else {
-            isNewInsert = true
+    
+    public subscript(key: KEY) -> VALUE? {
+        get {
+            guard let container = metadataByValue[key], !container.isDeleted else { return nil }
+            return container.value
         }
-        metadataByValue[value] = metadata
-
-        return isNewInsert
-    }
-
-    /// Removes a value from the set.
-    /// - Parameter value: The value to remove.
-    /// - Returns: The value removed from the set, or `nil` if the value didn't exist.
-    @discardableResult public mutating func remove(_ value: T) -> T? {
-        let returnValue: T?
-
-        if let oldMetadata = metadataByValue[value], !oldMetadata.isDeleted {
-            currentTimestamp.tick()
-            var metadata = Metadata(lamportTimestamp: currentTimestamp)
-            metadata.isDeleted = true
-            metadataByValue[value] = metadata
-            returnValue = value
-        } else {
-            returnValue = nil
+        
+        set(newValue) {
+            if let newValue = newValue {
+                currentTimestamp.tick()
+                let metadata = Metadata(lamportTimestamp: currentTimestamp, newValue)
+                metadataByValue[key] = metadata
+            } else if let oldMetadata = metadataByValue[key] {
+                currentTimestamp.tick()
+                var updatedMetaData = Metadata(lamportTimestamp: currentTimestamp, oldMetadata.value)
+                updatedMetaData.isDeleted = true
+                metadataByValue[key] = updatedMetaData
+            }
         }
-
-        return returnValue
     }
 }
 
@@ -130,7 +114,7 @@ extension ORMap: DeltaCRDT {
 
     /// The set of changes to bring another ORSet instance up to the same state.
     public struct ORMapDelta {
-        let updates: [T: Metadata]
+        let updates: [KEY: Metadata]
     }
 
     /// The current state of the ORSet.
@@ -174,7 +158,7 @@ extension ORMap: DeltaCRDT {
             return ORMapDelta(updates: metadataByValue)
         }
         // The state of a remote instance has been provided to us as a list of actorIds and max clock values.
-        var statesToReplicate: [T: Metadata]
+        var statesToReplicate: [KEY: Metadata]
 
         // To determine the changes that need to be replicated to the instance that provided the state:
         // Iterate through the local collection:
@@ -239,20 +223,20 @@ extension ORMap: DeltaCRDT {
     }
 }
 
-extension ORMap: Codable where T: Codable, ActorID: Codable {}
-extension ORMap.Metadata: Codable where T: Codable, ActorID: Codable {}
-extension ORMap.ORMapState: Codable where T: Codable, ActorID: Codable {}
-extension ORMap.ORMapDelta: Codable where T: Codable, ActorID: Codable {}
+extension ORMap: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
+extension ORMap.Metadata: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
+extension ORMap.ORMapState: Codable where KEY: Codable, ActorID: Codable {}
+extension ORMap.ORMapDelta: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
 
-extension ORMap: Equatable where T: Equatable {}
-extension ORMap.Metadata: Equatable where T: Equatable {}
-extension ORMap.ORMapState: Equatable where T: Equatable {}
-extension ORMap.ORMapDelta: Equatable where T: Equatable {}
+extension ORMap: Equatable where KEY: Equatable, VALUE: Equatable {}
+extension ORMap.Metadata: Equatable where KEY: Equatable, VALUE: Equatable {}
+extension ORMap.ORMapState: Equatable where KEY: Equatable {}
+extension ORMap.ORMapDelta: Equatable where KEY: Equatable, VALUE: Equatable {}
 
-extension ORMap: Hashable where T: Hashable {}
-extension ORMap.Metadata: Hashable where T: Hashable {}
-extension ORMap.ORMapState: Hashable where T: Hashable {}
-extension ORMap.ORMapDelta: Hashable where T: Hashable {}
+extension ORMap: Hashable where KEY: Hashable, VALUE: Hashable {}
+extension ORMap.Metadata: Hashable where KEY: Hashable, VALUE: Hashable {}
+extension ORMap.ORMapState: Hashable where KEY: Hashable {}
+extension ORMap.ORMapDelta: Hashable where KEY: Hashable, VALUE: Hashable {}
 
 #if DEBUG
     extension ORMap.Metadata: ApproxSizeable {
@@ -264,7 +248,7 @@ extension ORMap.ORMapDelta: Hashable where T: Hashable {}
     extension ORMap: ApproxSizeable {
         public func sizeInBytes() -> Int {
             let dictSize = metadataByValue.reduce(into: 0) { partialResult, meta in
-                partialResult += MemoryLayout<T>.size(ofValue: meta.key)
+                partialResult += MemoryLayout<KEY>.size(ofValue: meta.key)
                 partialResult += meta.value.sizeInBytes()
             }
             return currentTimestamp.sizeInBytes() + dictSize
@@ -284,7 +268,7 @@ extension ORMap.ORMapDelta: Hashable where T: Hashable {}
     extension ORMap.ORMapDelta: ApproxSizeable {
         public func sizeInBytes() -> Int {
             let dictSize = updates.reduce(into: 0) { partialResult, meta in
-                partialResult += MemoryLayout<T>.size(ofValue: meta.key)
+                partialResult += MemoryLayout<KEY>.size(ofValue: meta.key)
                 partialResult += meta.value.sizeInBytes()
             }
             return dictSize
