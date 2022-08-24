@@ -202,10 +202,23 @@ extension ORSet: DeltaCRDT {
         var copy = self
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
-            if let localLamportStampForValue = copy.metadataByValue[valueKey]?.lamportTimestamp {
-                if metadata.lamportTimestamp <= localLamportStampForValue {
-                    let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(metadata), remote: \(metadata)."
-                    throw CRDTMergeError.conflictingHistory(msg)
+            if let localMetadata = copy.metadataByValue[valueKey] {
+                if metadata.lamportTimestamp <= localMetadata.lamportTimestamp {
+                    // The remote delta is providing a timestamp equal to, or earlier than, our own.
+                    // Check to see if the metadata matches, and if so. If it does, then ignore this value and
+                    // leave things alone, as it could be identical causal updates, which shouldn't fail to merge.
+                    // If the metadata is in conflict, then throw an error since the history for this value conflicts.
+                    if !metadata.isDeleted == localMetadata.isDeleted {
+                        let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(localMetadata), remote: \(metadata)."
+                        throw CRDTMergeError.conflictingHistory(msg)
+                    }
+                    // The metadata is identical for the value, only the lamport timestamp is in conflict.
+                    // If the timestamp from the incoming value being merged is more recent, then we should
+                    // overwrite our timestamp value. Not doing "so should be safe", but could mean extra "diff"
+                    // values being propogated over consecutive merges.
+                    if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
+                        copy.metadataByValue[valueKey] = metadata
+                    }
                 } else {
                     // The incoming delta includes a key we already have, but the lamport timestamp is newer
                     // than the version we're tracking, so update the metadata with the remote's timestamp.
