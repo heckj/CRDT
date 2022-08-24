@@ -2,21 +2,21 @@
 //  LamportTimestamp.swift
 //
 
-/// A lamport timestamp for a specific actor.
+/// A Lamport timestamp for a specific actor.
 ///
-/// The comparable value of the actor identity is used to deterministically order of lamport timestamps in the scenario
+/// The comparable value of the actor identity is used to deterministically order of Lamport timestamps in the scenario
 /// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
 /// "at the same time".
 public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
     internal var clock: UInt64 = 0
     internal var actorId: ActorID
 
-    /// A stable, unique identity for the lamport timestamp.
+    /// A stable, unique identity for the Lamport timestamp.
     public var id: String {
         description
     }
 
-    /// Increments the value of the lamport timestamp.
+    /// Increments the value of the Lamport timestamp.
     public mutating func tick() {
         clock += 1
     }
@@ -32,7 +32,7 @@ public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Co
         (lhs.clock, lhs.id) < (rhs.clock, rhs.id)
     }
 
-    /// Create a new lamport timestamp with the actor identity you provide.
+    /// Create a new Lamport timestamp with the actor identity you provide.
     /// - Parameters:
     ///   - clock: An optional initial clock value, that otherwise defaults to `0`.
     ///   - actorId: The actor identity for the timestamp.

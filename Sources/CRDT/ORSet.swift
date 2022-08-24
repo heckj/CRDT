@@ -32,7 +32,7 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
-    ///   - clock: An optional lamport clock timestamp for this set.
+    ///   - clock: An optional Lamport clock timestamp for this set.
     public init(actorId: ActorID, clock: UInt64 = 0) {
         metadataByValue = .init()
         currentTimestamp = .init(clock: clock, actorId: actorId)
@@ -41,7 +41,7 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
-    ///   - clock: An optional lamport clock timestamp for this set.
+    ///   - clock: An optional Lamport clock timestamp for this set.
     ///   - elements: An list of elements to add to the set.
     public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
         self = .init(actorId: actorId, clock: clock)
@@ -144,8 +144,8 @@ extension ORSet: DeltaCRDT {
                 // Do the accumulated keys already reference an actorID from our CRDT?
                 if partialResult.keys.contains(valueMetaData.value.lamportTimestamp.actorId) {
                     // Our local CRDT knows of this actorId, so only include the value if the
-                    // lamport clock of the local data element's timestamp is larger than the accumulated
-                    // lamport clock for the actorId.
+                    // Lamport clock of the local data element's timestamp is larger than the accumulated
+                    // Lamport clock for the actorId.
                     if let latestKnownClock = partialResult[valueMetaData.value.lamportTimestamp.actorId],
                        latestKnownClock < valueMetaData.value.lamportTimestamp.clock
                     {
@@ -153,7 +153,7 @@ extension ORSet: DeltaCRDT {
                     }
                 } else {
                     // The local CRDT doesn't know about this actorId, so add it to the outgoing state being
-                    // accumulated into partialResult, including the current lamport clock value as the current
+                    // accumulated into partialResult, including the current Lamport clock value as the current
                     // latest value. If there is more than one entry by this actorId, the if check above this
                     // updates the timestamp to any later values.
                     partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
@@ -212,15 +212,15 @@ extension ORSet: DeltaCRDT {
                         let msg = "The metadata for the set value \(valueKey) has conflicting timestamps. local: \(localMetadata), remote: \(metadata)."
                         throw CRDTMergeError.conflictingHistory(msg)
                     }
-                    // The metadata is identical for the value, only the lamport timestamp is in conflict.
+                    // The metadata is identical for the value, only the Lamport timestamp is in conflict.
                     // If the timestamp from the incoming value being merged is more recent, then we should
                     // overwrite our timestamp value. Not doing "so should be safe", but could mean extra "diff"
-                    // values being propogated over consecutive merges.
+                    // values being propagated over consecutive merges.
                     if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
                         copy.metadataByValue[valueKey] = metadata
                     }
                 } else {
-                    // The incoming delta includes a key we already have, but the lamport timestamp is newer
+                    // The incoming delta includes a key we already have, but the Lamport timestamp is newer
                     // than the version we're tracking, so update the metadata with the remote's timestamp.
                     // This can happen when the metadata is updated, for example when a value is marked as
                     // deleted, by a remote CRDT.
@@ -264,7 +264,7 @@ extension ORSet.ORSetDelta: Hashable where T: Hashable {}
 
     extension ORSet: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            let dictSize = metadataByValue.reduce(into: 0) { partialResult, meta in
+            let dictSize = metadataByDictKey.reduce(into: 0) { partialResult, meta in
                 partialResult += MemoryLayout<T>.size(ofValue: meta.key)
                 partialResult += meta.value.sizeInBytes()
             }
