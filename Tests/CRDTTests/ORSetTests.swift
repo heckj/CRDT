@@ -244,7 +244,7 @@ final class ORSetTests: XCTestCase {
             orset_2 = try await orset_2.mergeDelta(replicatedDeltaFrom1)
             orset_1 = try await orset_1.mergeDelta(replicatedDeltaFrom2)
         } catch {
-            print(error)
+            // print(error)
             XCTFail()
         }
         XCTAssertEqual(orset_2.values, orset_1.values)

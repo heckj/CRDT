@@ -207,7 +207,7 @@ final class ORMapTests: XCTestCase {
             XCTFail("When merging map 1 into map 2, the value `c` has conflicting metadata (one is deleted, the other not) so it should throw an exception.")
         } catch let CRDTMergeError.conflictingHistory(msg) {
             XCTAssertNotNil(msg)
-            print("error: \(msg)")
+            // print("error: \(msg)")
 //        error: The metadata for the map key c is conflicting.
 //                local: [[3-31], deleted: true, value: 3],
 //                remote: [[3-13], deleted: false, value: 3].
@@ -276,7 +276,7 @@ final class ORMapTests: XCTestCase {
             ormap_2 = try await ormap_2.mergeDelta(replicatedDeltaFrom1)
             ormap_1 = try await ormap_1.mergeDelta(replicatedDeltaFrom2)
         } catch {
-            print(error)
+            // print(error)
             XCTFail()
         }
         XCTAssertEqual(ormap_2.values.sorted(), ormap_1.values.sorted())
