@@ -2,6 +2,8 @@
 
 An implementation of ∂-state based CRDTs (conflict-free replicated data types) in the Swift language.
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fheckj%2FCRDT%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/heckj/CRDT)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fheckj%2FCRDT%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/heckj/CRDT)
 [![codecov](https://codecov.io/gh/heckj/CRDT/branch/main/graph/badge.svg?token=AP68RBHNHM)](https://codecov.io/gh/heckj/CRDT)
 
 [![code coverage chart](https://codecov.io/gh/heckj/CRDT/branch/main/graphs/sunburst.svg?token=AP68RBHNHM)](https://codecov.io/gh/heckj/CRDT)
