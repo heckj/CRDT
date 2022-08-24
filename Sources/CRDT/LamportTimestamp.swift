@@ -3,23 +3,39 @@
 //
 
 /// A lamport timestamp for a specific actor.
+///
+/// The comparable value of the actor identity is used to deterministically order of lamport timestamps in the scenario
+/// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
+/// "at the same time".
 public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
     internal var clock: UInt64 = 0
     internal var actorId: ActorID
 
-    /// The identity of the counter metadata (atom) computed from the actor Id and the lamport timestamp.
+    /// A stable, unique identity for the lamport timestamp.
     public var id: String {
-        "\(clock)-\(actorId)"
+        description
     }
 
+    /// Increments the value of the lamport timestamp.
     public mutating func tick() {
         clock += 1
     }
 
+    /// Returns a Boolean value indicating whether the value of the first timestamp is less than that of the second timestamp.
+    ///
+    /// Timestamps are first compared by an internal `clock` value, and uses the provided actor to deterministically order values when the clocks are identical.
+    /// This assures that timestamps are partially order-able to satisfy  conformance to ``CRDT/PartiallyOrderable``.
+    /// - Parameters:
+    ///   - lhs: The first timestamp.
+    ///   - rhs: The second timestamp.
     public static func < (lhs: LamportTimestamp, rhs: LamportTimestamp) -> Bool {
         (lhs.clock, lhs.id) < (rhs.clock, rhs.id)
     }
 
+    /// Create a new lamport timestamp with the actor identity you provide.
+    /// - Parameters:
+    ///   - clock: An optional initial clock value, that otherwise defaults to `0`.
+    ///   - actorId: The actor identity for the timestamp.
     public init(clock: UInt64 = 0, actorId: ActorID) {
         self.clock = clock
         self.actorId = actorId
@@ -33,6 +49,22 @@ extension LamportTimestamp: Equatable {}
 extension LamportTimestamp: Hashable {}
 
 extension LamportTimestamp: PartiallyOrderable {}
+
+extension LamportTimestamp: CustomStringConvertible {
+    /// The description of the timestamp.
+    ///
+    /// In the format `[clockValue-actorID]`.
+    public var description: String {
+        "[\(clock)-\(actorId)]"
+    }
+}
+
+extension LamportTimestamp: CustomDebugStringConvertible {
+    /// The debug description of the timestamp.
+    public var debugDescription: String {
+        "LamportTimestamp<\(clock), \(actorId)>"
+    }
+}
 
 #if DEBUG
     extension LamportTimestamp: ApproxSizeable {
