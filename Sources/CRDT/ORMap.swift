@@ -91,11 +91,10 @@ extension ORMap: Replicable {
     ///
     /// This merge doesn't potentially throw errors, but in some causal edge cases, you might get unexpected metadata, which could result in unexpected values.
     ///
-    /// The merge is deterministic, but may not be perceived as accurate.
-    /// This can happen when two previously unsynchronized `ORMap` instances are merged together, both with registered values but with conflicting metadata about the state of deletion or of the value associated with the key.
-    /// To catch these scenarios, merge with the ``CRDT/ORMap/mergeDelta(_:)`` method, which will throw an error in these situations.
-    ///
-    /// By comparison, this method overwrites conflicting values, by choosing whichever of the two metadata sets has the latest timestamp clock.
+    /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
+    /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
     ///
     /// - Parameter other: The counter to merge.
     public func merged(with other: ORMap) -> ORMap {
@@ -202,43 +201,35 @@ extension ORMap: DeltaCRDT {
     /// - Parameter delta: The incremental, partial state to merge.
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
-    /// with our local metadata, this method will throw the error: ``CRDTMergeError/conflictingHistory(_:)``.
+    /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
+    ///
+    /// This method will throw an exception in the scenario where two identical Lamport timestamps (same clock, same actorId)
+    /// report conflicting metadata.
     public func mergeDelta(_ delta: ORMapDelta) async throws -> Self {
         var copy = self
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
             if let localMetadata = copy.metadataByDictKey[valueKey] {
-                if metadata.lamportTimestamp.clock <= localMetadata.lamportTimestamp.clock,
-                   metadata.isDeleted != localMetadata.isDeleted || metadata.value != metadata.value
-                {
-                    // The remote delta is providing a timestamp equal to, or earlier than, our own.
-                    // Check to see if the metadata matches, and if so. If it does, then ignore this value and
-                    // leave things alone, as it could be identical causal updates, which shouldn't fail to merge.
-                    // If the metadata is in conflict, then throw an error since the history for this value conflicts.
-                    let msg = "The metadata for the map key \(valueKey) is conflicting. local: \(localMetadata), remote: \(metadata)."
-                    throw CRDTMergeError.conflictingHistory(msg)
-                } else if metadata.lamportTimestamp.clock > localMetadata.lamportTimestamp.clock,
-                          metadata.isDeleted == localMetadata.isDeleted,
-                          metadata.value == metadata.value
-                {
-                    // The metadata is identical for the value, only the Lamport timestamp clock value is in conflict.
-                    // If the timestamp from the incoming value being merged is more recent, then we
-                    // overwrite our timestamp value. Not doing "so should be safe", but could mean extra "diff"
-                    // values being propagated over consecutive merges.
-                    copy.metadataByDictKey[valueKey] = metadata
-                } else {
+                // The importing delta *includes* a value that we already have - which generally
+                // should only happen when we merge two previously unsynchronized CRDTs.
+                if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
                     // The incoming delta includes a key we already have, but the Lamport timestamp clock value
-                    // is newer than the version we're tracking, so update the metadata with the remote's timestamp.
-                    // This can happen when the metadata is updated, for example when a value is marked as
-                    // deleted, by a remote CRDT.
+                    // is newer than the version we're tracking, so we choose the metadata with a higher lamport
+                    // timestamp.
                     copy.metadataByDictKey[valueKey] = metadata
+                } else if metadata.lamportTimestamp == localMetadata.lamportTimestamp, metadata != localMetadata {
+                    let msg = "The metadata for the set value of \(valueKey) has conflicting metadata. local: \(localMetadata), remote: \(metadata)."
+                    throw CRDTMergeError.conflictingHistory(msg)
                 }
             } else {
-                // We don't have this entry, so copy it into place with the metadata from the delta.
+                // We don't have this entry, so we accept all the details from the diff and merge that into place
+                // with its metadata.
                 copy.metadataByDictKey[valueKey] = metadata
             }
             // If the remote values have a more recent clock value for this actor instance,
-            // increment the clock.
+            // increment the clock to that higher value.
             if metadata.lamportTimestamp.actorId == copy.currentTimestamp.actorId, metadata.lamportTimestamp.clock > copy.currentTimestamp.clock {
                 copy.currentTimestamp.clock = metadata.lamportTimestamp.clock
             }
