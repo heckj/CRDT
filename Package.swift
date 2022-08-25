@@ -16,9 +16,7 @@ let package = Package(
             targets: ["CRDT"]
         ),
     ],
-    dependencies: [
-        //.package(url: "https://github.com/apple/swift-docc-plugin", branch: "main"),
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "CRDT",
