@@ -18,6 +18,7 @@ CRDT Type | Description
 ``CRDT/LWWRegister`` | A Last Write Wins register.
 ``CRDT/GSet`` | A grow-only set.
 ``CRDT/ORSet`` | An Observed-Removed set
+``CRDT/ORMap`` | An Observed-Removed map
 
 For more information on CRDTs and their algorithms, see the [CRDT.tech website](https://crdt.tech), or
 [Wikipedia's page on CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type).
@@ -37,6 +38,10 @@ For more information on CRDTs and their algorithms, see the [CRDT.tech website](
 
 - ``CRDT/GSet``
 - ``CRDT/ORSet``
+
+### Maps
+
+- ``CRDT/ORMap``
 
 ### Timestamps
 
