@@ -194,7 +194,7 @@ final class ORSetTests: XCTestCase {
 //            ])
             let result = try await orset_2.mergeDelta(diff_a)
             XCTAssertEqual(result.count, 3)
-        } catch let CRDTMergeError.conflictingHistory(_) {
+        } catch CRDTMergeError.conflictingHistory(_) {
             XCTFail("When merging set 1 into set 2, the value `3` should has a higher Lamport timestamp, so it should merge cleanly")
         }
 
@@ -203,7 +203,7 @@ final class ORSetTests: XCTestCase {
         do {
             let result = try await orset_1.mergeDelta(diff_b)
             XCTAssertEqual(result.count, 3)
-        } catch let CRDTMergeError.conflictingHistory(_) {
+        } catch CRDTMergeError.conflictingHistory(_) {
             XCTFail("The merge didn't catch and throw on a failure due to conflicting Lamport timestamps for the value `3`.")
         }
     }
@@ -216,8 +216,8 @@ final class ORSetTests: XCTestCase {
         orset_1.insert("a")
         orset_1.insert("b")
         var orset_2 = ORSet<UInt, String>(actorId: UInt(13))
-        orset_1.insert("a")
-        orset_1.insert("z")
+        orset_2.insert("a")
+        orset_2.insert("z")
 
         // The state's alone _won't_ show any changes, as the state
         // doesn't have any detail about the *content*.
