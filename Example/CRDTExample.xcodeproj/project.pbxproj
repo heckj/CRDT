@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1A9E7A9428B6F76F00ADE1ED /* CRDT in Frameworks */ = {isa = PBXBuildFile; productRef = 1A9E7A9328B6F76F00ADE1ED /* CRDT */; };
+		1A9E7A9728B6F77C00ADE1ED /* LocalNetworkActorSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 1A9E7A9628B6F77C00ADE1ED /* LocalNetworkActorSystem */; };
 		1AE2D8CC28B6F6DF00E86083 /* CRDTExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE2D8CB28B6F6DF00E86083 /* CRDTExampleApp.swift */; };
 		1AE2D8CE28B6F6DF00E86083 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE2D8CD28B6F6DF00E86083 /* ContentView.swift */; };
 		1AE2D8D028B6F6E000E86083 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1AE2D8CF28B6F6E000E86083 /* Assets.xcassets */; };
@@ -27,6 +29,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A9E7A9728B6F77C00ADE1ED /* LocalNetworkActorSystem in Frameworks */,
+				1A9E7A9428B6F76F00ADE1ED /* CRDT in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +89,10 @@
 			dependencies = (
 			);
 			name = CRDTExample;
+			packageProductDependencies = (
+				1A9E7A9328B6F76F00ADE1ED /* CRDT */,
+				1A9E7A9628B6F77C00ADE1ED /* LocalNetworkActorSystem */,
+			);
 			productName = CRDTExample;
 			productReference = 1AE2D8C828B6F6DF00E86083 /* CRDTExample.app */;
 			productType = "com.apple.product-type.application";
@@ -113,6 +121,10 @@
 				Base,
 			);
 			mainGroup = 1AE2D8BF28B6F6DF00E86083;
+			packageReferences = (
+				1A9E7A9228B6F76F00ADE1ED /* XCRemoteSwiftPackageReference "CRDT" */,
+				1A9E7A9528B6F77C00ADE1ED /* XCRemoteSwiftPackageReference "LocalNetworkActorSystem" */,
+			);
 			productRefGroup = 1AE2D8C928B6F6DF00E86083 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -197,6 +209,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -249,6 +263,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -354,6 +370,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1A9E7A9228B6F76F00ADE1ED /* XCRemoteSwiftPackageReference "CRDT" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/heckj/CRDT.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		1A9E7A9528B6F77C00ADE1ED /* XCRemoteSwiftPackageReference "LocalNetworkActorSystem" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/heckj/LocalNetworkActorSystem.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1A9E7A9328B6F76F00ADE1ED /* CRDT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1A9E7A9228B6F76F00ADE1ED /* XCRemoteSwiftPackageReference "CRDT" */;
+			productName = CRDT;
+		};
+		1A9E7A9628B6F77C00ADE1ED /* LocalNetworkActorSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1A9E7A9528B6F77C00ADE1ED /* XCRemoteSwiftPackageReference "LocalNetworkActorSystem" */;
+			productName = LocalNetworkActorSystem;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1AE2D8C028B6F6DF00E86083 /* Project object */;
 }
