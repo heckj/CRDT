@@ -12,3 +12,6 @@ DerivedData/
 Sources/CRDT/Documentation.docc/.docc-build
 all_symbols.txt
 all_identifiers.txt
+Example/Packages
+Example/.build
+Example/CRDTExample.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
