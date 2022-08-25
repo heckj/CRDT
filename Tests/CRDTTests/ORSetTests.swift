@@ -175,25 +175,8 @@ final class ORSetTests: XCTestCase {
         // merge the diff from set 1 into set 2
 
         do {
-            //  I intentionally left these comments inline to make it easier
-            //  for future-me to understand the data structure's being returned
-            //  and reason about how it _should_ work.
-//
-//            print(orset_2)
-//            ORSet<UInt, Int>(
-//                currentTimestamp: LamportTimestamp<3, 13>,
-//                metadataByValue: [
-//                    4: [[2-13], deleted: false],
-//                    3: [[3-13], deleted: true]
-//                ])
-//            print(diff_a)
-//            ORSetDelta(updates: [
-//                1: [[1-31], deleted: false],
-//                3: [[3-31], deleted: false],
-//                2: [[2-31], deleted: false]
-//            ])
             let result = try await orset_2.mergeDelta(diff_a)
-            XCTAssertEqual(result.count, 3)
+            XCTAssertEqual(result.count, 4)
         } catch CRDTMergeError.conflictingHistory(_) {
             XCTFail("When merging set 1 into set 2, the value `3` should has a higher Lamport timestamp, so it should merge cleanly")
         }
@@ -202,7 +185,7 @@ final class ORSetTests: XCTestCase {
 
         do {
             let result = try await orset_1.mergeDelta(diff_b)
-            XCTAssertEqual(result.count, 3)
+            XCTAssertEqual(result.count, 4)
         } catch CRDTMergeError.conflictingHistory(_) {
             XCTFail("The merge didn't catch and throw on a failure due to conflicting Lamport timestamps for the value `3`.")
         }
@@ -212,12 +195,9 @@ final class ORSetTests: XCTestCase {
         // actor id's intentionally identical, but with different data inside them,
         // which *shouldn't* happen in practice, but this represents a throwing case
         // I wanted to get correctly established.
-        var orset_1 = ORSet<UInt, String>(actorId: UInt(13))
-        orset_1.insert("a")
-        orset_1.insert("b")
-        var orset_2 = ORSet<UInt, String>(actorId: UInt(13))
-        orset_2.insert("a")
-        orset_2.insert("z")
+        let orset_1 = ORSet(actorId: UInt(13), [1, 2, 3])
+        var orset_2 = ORSet(actorId: UInt(13), [3, 4])
+        orset_2.remove(3)
 
         // The state's alone _won't_ show any changes, as the state
         // doesn't have any detail about the *content*.
@@ -238,39 +218,19 @@ final class ORSetTests: XCTestCase {
 
         let diff_full_a = await orset_1.delta(nil)
         XCTAssertNotNil(diff_full_a)
-        XCTAssertEqual(diff_full_a.updates.count, 2)
+        XCTAssertEqual(diff_full_a.updates.count, 3)
 
         let diff_full_b = await orset_2.delta(nil)
         XCTAssertNotNil(diff_full_b)
         XCTAssertEqual(diff_full_b.updates.count, 2)
 
         do {
-            //  I intentionally left these comments inline to make it easier
-            //  for future-me to understand the data structure's being returned
-            //  and reason about how it _should_ work.
-//
-//            print(ormap_2)
-//            ORMap<UInt, String, Int>(
-//                currentTimestamp: LamportTimestamp<2, 13>,
-//                metadataByDictKey: [
-//                    "a": [[1-13], deleted: false, value: 1],
-//                    "b": [[2-13], deleted: false, value: 99]
-//                ])
-//
-//            print(diff_full_a)
-//            ORMapDelta(updates: [
-//                "a": [[1-13], deleted: false, value: 1],
-//                "b": [[2-13], deleted: false, value: 2]
-//            ])
-
             let _ = try await orset_2.mergeDelta(diff_full_a)
             XCTFail("When merging a full delta from map 1 into map 2, the value `b` has conflicting metadata so it should throw an exception.")
         } catch let CRDTMergeError.conflictingHistory(msg) {
             XCTAssertNotNil(msg)
-            // print("error: \(msg)")
-//        error: The metadata for the map key c is conflicting.
-//                local: [[3-31], deleted: true, value: 3],
-//                remote: [[3-13], deleted: false, value: 3].
+//            print("error: \(msg)")
+//            error: The metadata for the set value of 3 has conflicting metadata. local: [[3-13], deleted: true], remote: [[3-13], deleted: false].
         }
     }
 

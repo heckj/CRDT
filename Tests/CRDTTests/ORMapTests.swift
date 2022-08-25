@@ -256,60 +256,21 @@ final class ORMapTests: XCTestCase {
         // merge the diff from map 1 into map 2
 
         do {
-            //  I intentionally left these comments inline to make it easier
-            //  for future-me to understand the data structure's being returned
-            //  and reason about how it _should_ work.
-//
-//            print(ormap_2)
-//            ORMap<UInt, String, Int>(
-//                currentTimestamp: LamportTimestamp<3, 13>,
-//                metadataByDictKey: [
-//                    "d": [[2-13], deleted: false, value: 4],
-//                    "c": [[3-13], deleted: true, value: 3]
-//                ])
-//            print(diff_a)
-//            ORMapDelta(updates: [
-//                "b": [[2-31], deleted: false, value: 2],
-//                "a": [[1-31], deleted: false, value: 1],
-//                "c": [[3-31], deleted: false, value: 3]
-//            ])
-            let _ = try await ormap_2.mergeDelta(diff_a)
+            let result = try await ormap_2.mergeDelta(diff_a)
+            XCTAssertNotNil(result)
+            XCTAssertEqual(result.count, 3)
+        } catch CRDTMergeError.conflictingHistory(_) {
             XCTFail("When merging map 1 into map 2, the value `c` has conflicting metadata (one is deleted, the other not) so it should throw an exception.")
-        } catch let CRDTMergeError.conflictingHistory(msg) {
-            XCTAssertNotNil(msg)
-            // print("error: \(msg)")
-//        error: The metadata for the map key c is conflicting.
-//                local: [[3-31], deleted: true, value: 3],
-//                remote: [[3-13], deleted: false, value: 3].
         }
 
         // merge the diff from map 2 into map 1
 
         do {
-            //  I intentionally left these comments inline to make it easier
-            //  for future-me to understand the data structure's being returned
-            //  and reason about how it _should_ work.
-//
-//            print(ormap_1)
-//            ORMap<UInt, String, Int>(
-//                currentTimestamp: LamportTimestamp<3, 31>,
-//                metadataByDictKey: [
-//                    "c": [[3-31], deleted: false, value: 3],
-//                    "a": [[1-31], deleted: false, value: 1],
-//                    "b": [[2-31], deleted: false, value: 2]
-//                ])
-//            print(diff_b)
-//            ORMapDelta(updates: [
-//                "d": [[2-13], deleted: false, value: 4],
-//                "c": [[3-13], deleted: true, value: 3]
-//            ])
-            let _ = try await ormap_1.mergeDelta(diff_b)
+            let result = try await ormap_1.mergeDelta(diff_b)
+            XCTAssertNotNil(result)
+            XCTAssertEqual(result.count, 3)
+        } catch CRDTMergeError.conflictingHistory(_) {
             XCTFail("When merging map 1 into map 2, the value `c` has conflicting metadata (one is deleted, the other not) so it should throw an exception.")
-        } catch let CRDTMergeError.conflictingHistory(msg) {
-            XCTAssertNotNil(msg)
-            // print("error: \(msg)")
-            // Example message:
-            // The metadata for the set value 3 has conflicting timestamps. local: [[3-31], deleted: false], remote: [[3-13], deleted: true].
         }
     }
 
