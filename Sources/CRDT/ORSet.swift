@@ -12,8 +12,8 @@ import Foundation
 /// The implementation is based on "An Optimized Conflict-free Replicated Set" by
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368)
-public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
-    internal struct Metadata: CustomStringConvertible {
+public struct ORSet<ActorID: Hashable & Comparable & Sendable, T: Hashable & Sendable>: Sendable {
+    internal struct Metadata: Sendable, CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
         var description: String {

@@ -9,7 +9,7 @@ import Foundation
 /// The `GCounter` implementation is based on the grow-only counter described in
 /// [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct GCounter<ActorID: Hashable & Comparable> {
+public struct GCounter<ActorID: Hashable & Comparable & Sendable>: Sendable {
     private var _storage: UInt
     internal let selfId: ActorID
 

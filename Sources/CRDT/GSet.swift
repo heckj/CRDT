@@ -9,7 +9,7 @@ import Foundation
 /// The `GSet` implementation is based on the grow-only set  described in
 /// [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
+public struct GSet<ActorID: Hashable & Comparable & Sendable, T: Hashable & Sendable>: Sendable {
     private var _storage: Set<T>
     internal var currentTimestamp: LamportTimestamp<ActorID>
 
