@@ -101,14 +101,14 @@ final class ORMapTests: XCTestCase {
     }
 
     func testDeltaState_state() async {
-        let state = await a.state
+        let state = a.state
         XCTAssertNotNil(state)
         XCTAssertEqual(Array(state.maxClockValueByActor.keys), [a.currentTimestamp.actorId])
         XCTAssertEqual(Array(state.maxClockValueByActor.values), [a.currentTimestamp.clock])
     }
 
     func testDeltaState_nilDelta() async {
-        let a_nil_delta = await a.delta(nil)
+        let a_nil_delta = a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.updates.count, 1)
@@ -116,7 +116,7 @@ final class ORMapTests: XCTestCase {
     }
 
     func testDeltaState_delta() async {
-        let a_delta = await a.delta(b.state)
+        let a_delta = a.delta(b.state)
         XCTAssertEqual(a_delta.updates.count, 1)
         XCTAssertEqual(a_delta.updates, a.metadataByDictKey)
     }
@@ -124,8 +124,8 @@ final class ORMapTests: XCTestCase {
     func testDeltaState_mergeDeltas() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = await b.delta(a.state)
-        let c = try await a.mergeDelta(delta)
+        let delta = b.delta(a.state)
+        let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values.sorted(), b.values.sorted())
         XCTAssertEqual(c.keys.sorted(), b.keys.sorted())
     }
@@ -133,8 +133,8 @@ final class ORMapTests: XCTestCase {
     func testDeltaState_mergeDelta() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = await b.delta(a.state)
-        let c = try await a.mergeDelta(delta)
+        let delta = b.delta(a.state)
+        let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values.sorted(), b.values.sorted())
         XCTAssertEqual(c.keys.sorted(), b.keys.sorted())
     }
@@ -143,22 +143,22 @@ final class ORMapTests: XCTestCase {
         let ormap_1 = ORMap(actorId: UInt(31), ["a": 1, "b": 2, "c": 3, "d": 4])
         let ormap_2 = ORMap(actorId: UInt(13), ["e": 5, "f": 6])
 
-        let diff_a = await ormap_1.delta(await ormap_2.state)
+        let diff_a = ormap_1.delta(ormap_2.state)
         // diff_a is the delta from map 1
         XCTAssertNotNil(diff_a)
         XCTAssertEqual(diff_a.updates.count, 4)
 
-        let diff_b = await ormap_2.delta(await ormap_1.state)
+        let diff_b = ormap_2.delta(ormap_1.state)
         // diff_b is the delta from map 2
         XCTAssertNotNil(diff_b)
         XCTAssertEqual(diff_b.updates.count, 2)
 
         // merge the diff from map 1 into map 2
-        let mergedFrom1 = try await ormap_2.mergeDelta(diff_a)
+        let mergedFrom1 = try ormap_2.mergeDelta(diff_a)
         XCTAssertEqual(mergedFrom1.count, 6)
 
         // merge the diff from map 2 into map 1
-        let mergedFrom2 = try await ormap_1.mergeDelta(diff_b)
+        let mergedFrom2 = try ormap_1.mergeDelta(diff_b)
         XCTAssertEqual(mergedFrom2.count, 6)
 
         XCTAssertEqual(mergedFrom1.values.sorted(), mergedFrom2.values.sorted())
@@ -179,12 +179,12 @@ final class ORMapTests: XCTestCase {
         // The state's alone _won't_ show any changes, as the state
         // doesn't have any detail about the *content*.
 
-        let diff_a = await ormap_1.delta(await ormap_2.state)
+        let diff_a = ormap_1.delta(ormap_2.state)
         // diff_a is the delta from map 1
         XCTAssertNotNil(diff_a)
         XCTAssertEqual(diff_a.updates.count, 0)
 
-        let diff_b = await ormap_2.delta(await ormap_1.state)
+        let diff_b = ormap_2.delta(ormap_1.state)
         // diff_b is the delta from map 2
         XCTAssertNotNil(diff_b)
         XCTAssertEqual(diff_b.updates.count, 0)
@@ -193,11 +193,11 @@ final class ORMapTests: XCTestCase {
         // with a nil state) and then merge that, it'll throw the
         // exception related to corrupted/conflicting history.
 
-        let diff_full_a = await ormap_1.delta(nil)
+        let diff_full_a = ormap_1.delta(nil)
         XCTAssertNotNil(diff_full_a)
         XCTAssertEqual(diff_full_a.updates.count, 2)
 
-        let diff_full_b = await ormap_2.delta(nil)
+        let diff_full_b = ormap_2.delta(nil)
         XCTAssertNotNil(diff_full_b)
         XCTAssertEqual(diff_full_b.updates.count, 2)
 
@@ -220,7 +220,7 @@ final class ORMapTests: XCTestCase {
 //                "b": [[2-13], deleted: false, value: 2]
 //            ])
 
-            let _ = try await ormap_2.mergeDelta(diff_full_a)
+            let _ = try ormap_2.mergeDelta(diff_full_a)
             XCTFail("When merging a full delta from map 1 into map 2, the value `b` has conflicting metadata so it should throw an exception.")
         } catch let CRDTMergeError.conflictingHistory(msg) {
             XCTAssertNotNil(msg)
@@ -243,12 +243,12 @@ final class ORMapTests: XCTestCase {
         // the metadata for the entry for `c` is going to be in conflict, both by
         // Lamport timestamps ('2' vs '3') and the metadata in question (deleted vs not)
 
-        let diff_a = await ormap_1.delta(await ormap_2.state)
+        let diff_a = ormap_1.delta(ormap_2.state)
         // diff_a is the delta from map 1
         XCTAssertNotNil(diff_a)
         XCTAssertEqual(diff_a.updates.count, 3)
 
-        let diff_b = await ormap_2.delta(await ormap_1.state)
+        let diff_b = ormap_2.delta(ormap_1.state)
         // diff_b is the delta from map 2
         XCTAssertNotNil(diff_b)
         XCTAssertEqual(diff_b.updates.count, 2)
@@ -256,7 +256,7 @@ final class ORMapTests: XCTestCase {
         // merge the diff from map 1 into map 2
 
         do {
-            let result = try await ormap_2.mergeDelta(diff_a)
+            let result = try ormap_2.mergeDelta(diff_a)
             XCTAssertNotNil(result)
             XCTAssertEqual(result.count, 3)
         } catch CRDTMergeError.conflictingHistory(_) {
@@ -266,7 +266,7 @@ final class ORMapTests: XCTestCase {
         // merge the diff from map 2 into map 1
 
         do {
-            let result = try await ormap_1.mergeDelta(diff_b)
+            let result = try ormap_1.mergeDelta(diff_b)
             XCTAssertNotNil(result)
             XCTAssertEqual(result.count, 3)
         } catch CRDTMergeError.conflictingHistory(_) {
@@ -280,13 +280,13 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_1.count, 3)
         XCTAssertEqual(ormap_2.count, 0)
 
-        let replicatedDeltaFromInitial1 = await ormap_1.delta(await ormap_2.state)
+        let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state)
         // diff_a is the delta from map 1
         XCTAssertNotNil(replicatedDeltaFromInitial1)
         XCTAssertEqual(replicatedDeltaFromInitial1.updates.count, 3)
 
         // overwrite ormap_2 with the version merged with 1
-        ormap_2 = try await ormap_2.mergeDelta(replicatedDeltaFromInitial1)
+        ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFromInitial1)
         XCTAssertEqual(ormap_2.count, 3)
         XCTAssertEqual(ormap_2.values.sorted(), ormap_1.values.sorted())
         XCTAssertEqual(ormap_2.keys.sorted(), ormap_1.keys.sorted())
@@ -298,8 +298,8 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_2.count, 4)
 
         // check the delta's in both directions:
-        let replicatedDeltaFrom1 = await ormap_1.delta(await ormap_2.state)
-        let replicatedDeltaFrom2 = await ormap_2.delta(await ormap_1.state)
+        let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state)
+        let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state)
 
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)
@@ -308,8 +308,8 @@ final class ORMapTests: XCTestCase {
 
         // This *should* be a legit merge, since the metadata isn't in conflict.
         do {
-            ormap_2 = try await ormap_2.mergeDelta(replicatedDeltaFrom1)
-            ormap_1 = try await ormap_1.mergeDelta(replicatedDeltaFrom2)
+            ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFrom1)
+            ormap_1 = try ormap_1.mergeDelta(replicatedDeltaFrom2)
         } catch {
             // print(error)
             XCTFail()
@@ -324,13 +324,13 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_1.count, 3)
         XCTAssertEqual(ormap_2.count, 0)
 
-        let replicatedDeltaFromInitial1 = await ormap_1.delta(await ormap_2.state)
+        let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state)
         // diff_a is the delta from map 1
         XCTAssertNotNil(replicatedDeltaFromInitial1)
         XCTAssertEqual(replicatedDeltaFromInitial1.updates.count, 3)
 
         // overwrite ormap_2 with the version merged with 1
-        ormap_2 = try await ormap_2.mergeDelta(replicatedDeltaFromInitial1)
+        ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFromInitial1)
         XCTAssertEqual(ormap_2.count, 3)
         XCTAssertEqual(ormap_2.values.sorted(), ormap_1.values.sorted())
         XCTAssertEqual(ormap_2.keys.sorted(), ormap_1.keys.sorted())
@@ -342,8 +342,8 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_2.count, 3)
 
         // check the delta's in both directions:
-        let replicatedDeltaFrom1 = await ormap_1.delta(await ormap_2.state)
-        let replicatedDeltaFrom2 = await ormap_2.delta(await ormap_1.state)
+        let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state)
+        let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state)
 
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)
@@ -352,8 +352,8 @@ final class ORMapTests: XCTestCase {
 
         // This *should* be a legit merge, since the metadata isn't in conflict.
         do {
-            ormap_2 = try await ormap_2.mergeDelta(replicatedDeltaFrom1)
-            ormap_1 = try await ormap_1.mergeDelta(replicatedDeltaFrom2)
+            ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFrom1)
+            ormap_1 = try ormap_1.mergeDelta(replicatedDeltaFrom2)
         } catch {
             // print(error)
             XCTFail()

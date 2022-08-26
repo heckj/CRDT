@@ -13,6 +13,8 @@ public protocol Replicable {
     /// Returns a new CRDT by merging two CRDT instances.
     /// - Parameter other: The CRDT to merge.
     func merged(with other: Self) -> Self
+    
+    mutating func merging(with other: Self)
 }
 
 /// A type that can be used to determine partial order sets or sequences.

@@ -65,6 +65,12 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
 }
 
 extension LWWRegister: Replicable {
+    public mutating func merging(with other: LWWRegister<ActorID, T>) {
+        if _storage <= other._storage {
+            _storage = other._storage
+        }
+    }
+    
     /// Returns a new counter by merging two counter instances.
     /// - Parameter other: The counter to merge.
     public func merged(with other: LWWRegister) -> LWWRegister {
@@ -80,7 +86,7 @@ extension LWWRegister: DeltaCRDT {
 
     /// The current state of the CRDT.
     public var state: Atom {
-        get async {
+        get {
             _storage
         }
     }
@@ -89,17 +95,24 @@ extension LWWRegister: DeltaCRDT {
     ///
     /// - Parameter state: The optional state of the remote CRDT.
     /// - Returns: The changes to be merged into the counter instance that provided the state to converge its state with this instance.
-    public func delta(_: Atom?) async -> Atom {
+    public func delta(_: Atom?) -> Atom {
         _storage
     }
 
     /// Returns a new instance of a register with the delta you provide merged into the current register.
     /// - Parameter delta: The incremental, partial state to merge.
-    public func mergeDelta(_ delta: Atom) async -> Self {
+    public func mergeDelta(_ delta: Atom) -> Self {
         var newLWW = self
         newLWW._storage = _storage <= delta ? delta : _storage
         return newLWW
     }
+    
+    public mutating func mergingDelta(_ delta: Atom) throws {
+        if _storage <= delta {
+            _storage = delta
+        }
+    }
+    
 }
 
 extension LWWRegister: Codable where T: Codable, ActorID: Codable {}

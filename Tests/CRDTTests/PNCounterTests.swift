@@ -88,19 +88,19 @@ final class PNCounterTests: XCTestCase {
     }
 
     func testDeltaState_state() async {
-        let atom = await a.state
+        let atom = a.state
         XCTAssertNotNil(atom)
         XCTAssertEqual(a.value, Int(atom.pos) - Int(atom.neg))
     }
 
     func testDeltaState_delta() async {
-        let a_nil_delta = await a.delta(nil)
+        let a_nil_delta = a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.pos, 1)
         XCTAssertEqual(a_nil_delta.neg, 0)
 
-        let a_delta = await a.delta(b.state)
+        let a_delta = a.delta(b.state)
         XCTAssertNotNil(a_delta)
         XCTAssertEqual(a_delta.pos, 1)
         XCTAssertEqual(a_delta.neg, 0)
@@ -109,7 +109,7 @@ final class PNCounterTests: XCTestCase {
     func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let c = await a.mergeDelta(await b.delta(a.state))
+        let c = a.mergeDelta(b.delta(a.state))
         XCTAssertEqual(c.value, b.value)
     }
 }

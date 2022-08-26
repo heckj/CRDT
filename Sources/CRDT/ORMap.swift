@@ -111,6 +111,20 @@ extension ORMap: Replicable {
         copy.currentTimestamp = max(currentTimestamp, other.currentTimestamp)
         return copy
     }
+    
+    public mutating func merging(with other: ORMap) {
+        metadataByDictKey = other.metadataByDictKey.reduce(into: metadataByDictKey) { result, entry in
+            let firstMetadata = result[entry.key]
+            let secondMetadata = entry.value
+            if let firstMetadata = firstMetadata {
+                result[entry.key] = firstMetadata.lamportTimestamp > secondMetadata.lamportTimestamp ? firstMetadata : secondMetadata
+            } else {
+                result[entry.key] = secondMetadata
+            }
+        }
+        currentTimestamp = max(currentTimestamp, other.currentTimestamp)
+    }
+    
 }
 
 extension ORMap: DeltaCRDT {
@@ -140,7 +154,7 @@ extension ORMap: DeltaCRDT {
 
     /// The current state of the ORSet.
     public var state: ORMapState {
-        get async {
+        get {
             // The composed, compressed state to compare consists of a list of all the collaborators (represented
             // by the actorId in the LamportTimestamps) with their highest value for clock.
             var maxClockValueByActor: [ActorID: UInt64]
@@ -173,7 +187,7 @@ extension ORMap: DeltaCRDT {
     ///
     /// - Parameter state: The optional state of the remote ORSet.
     /// - Returns: The changes to be merged into the ORSet instance that provided the state to converge its state with this instance.
-    public func delta(_ otherInstanceState: ORMapState?) async -> ORMapDelta {
+    public func delta(_ otherInstanceState: ORMapState?) -> ORMapDelta {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxClockValueByActor: [ActorID: UInt64] = otherInstanceState?.maxClockValueByActor else {
             return ORMapDelta(updates: metadataByDictKey)
@@ -207,7 +221,7 @@ extension ORMap: DeltaCRDT {
     ///
     /// This method will throw an exception in the scenario where two identical Lamport timestamps (same clock, same actorId)
     /// report conflicting metadata.
-    public func mergeDelta(_ delta: ORMapDelta) async throws -> Self {
+    public func mergeDelta(_ delta: ORMapDelta) throws -> Self {
         var copy = self
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
@@ -236,6 +250,36 @@ extension ORMap: DeltaCRDT {
         }
         return copy
     }
+    
+    public mutating func mergingDelta(_ delta: ORMapDelta) throws {
+        for (valueKey, metadata) in delta.updates {
+            // Check to see if we already have this entry in our set...
+            if let localMetadata = metadataByDictKey[valueKey] {
+                // The importing delta *includes* a value that we already have - which generally
+                // should only happen when we merge two previously unsynchronized CRDTs.
+                if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
+                    // The incoming delta includes a key we already have, but the Lamport timestamp clock value
+                    // is newer than the version we're tracking, so we choose the metadata with a higher lamport
+                    // timestamp.
+                    metadataByDictKey[valueKey] = metadata
+                } else if metadata.lamportTimestamp == localMetadata.lamportTimestamp, metadata != localMetadata {
+                    let msg = "The metadata for the set value of \(valueKey) has conflicting metadata. local: \(localMetadata), remote: \(metadata)."
+                    throw CRDTMergeError.conflictingHistory(msg)
+                }
+            } else {
+                // We don't have this entry, so we accept all the details from the diff and merge that into place
+                // with its metadata.
+                metadataByDictKey[valueKey] = metadata
+            }
+            // If the remote values have a more recent clock value for this actor instance,
+            // increment the clock to that higher value.
+            if metadata.lamportTimestamp.actorId == currentTimestamp.actorId,
+                metadata.lamportTimestamp.clock > currentTimestamp.clock {
+                currentTimestamp.clock = metadata.lamportTimestamp.clock
+            }
+        }
+    }
+
 }
 
 extension ORMap: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}

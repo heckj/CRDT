@@ -20,7 +20,7 @@ public protocol DeltaCRDT: Replicable {
     associatedtype Delta
 
     /// The current state of the CRDT.
-    var state: DeltaState { get async }
+    var state: DeltaState { get }
 
     /// Computes and returns a diff from the current state of the CRDT to be used to update another instance.
     ///
@@ -28,12 +28,14 @@ public protocol DeltaCRDT: Replicable {
     ///
     /// - Parameter state: The optional state of the remote CRDT.
     /// - Returns: The changes to be merged into the CRDT instance that provided the state to converge its state with this instance.
-    func delta(_ state: DeltaState?) async -> Delta
+    func delta(_ state: DeltaState?) -> Delta
 
     /// Returns a new instance of a CRDT with the delta you provide merged into the current CRDT.
     /// - Parameter delta: The incremental, partial state to merge.
     ///
     /// CRDTs that maintain causal history for updates may throw errors if the state included within the delta you provide conflicts
     /// with the local CRDT's history.
-    func mergeDelta(_ delta: Delta) async throws -> Self
+    func mergeDelta(_ delta: Delta) throws -> Self
+    
+    mutating func mergingDelta(_ delta: Delta) throws
 }
