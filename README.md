@@ -1,6 +1,6 @@
 # CRDT
 
-An implementation of ∂-state based CRDTs (conflict-free replicated data types) in the Swift language.
+An implementation of ∂-state based Conflict-free Replicated Data Types (CRDT) in the Swift language.
 
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fheckj%2FCRDT%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/heckj/CRDT)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fheckj%2FCRDT%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/heckj/CRDT)
@@ -8,7 +8,10 @@ An implementation of ∂-state based CRDTs (conflict-free replicated data types)
 
 [![code coverage chart](https://codecov.io/gh/heckj/CRDT/branch/main/graphs/sunburst.svg?token=AP68RBHNHM)](https://codecov.io/gh/heckj/CRDT)
 
-This library implements well-known state-based CRDTs as swift generics, and supplies a replicator to support using CRDTs in your own data models.
+This library implements well-known state-based CRDTs as swift generics, sometimes described as convergent replicated data types (CvRDT).
+The implementation includes delta-state replication functions, which allows for more compact representations when syncing between collaboration endpoints. The alternative is to replicate the entire state for every sync.
+
+The [CRDT API documentation](https://swiftpackageindex.com/heckj/CRDT/main/documentation/crdt) is hosted at the [Swift Package Index](https://swiftpackageindex.com/).
 
 - [X] G-Counter (grow-only counter)
 - [X] PN-Counter (A positive-negative counter)
@@ -17,6 +20,7 @@ This library implements well-known state-based CRDTs as swift generics, and supp
 - [X] OR-Set (observed-remove set, with LWW add bias)
 - [X] OR-Map (observed-remove map, with LWW add or update bias)
 - [ ] Replicator
+
 
 For more, general, information on CRDTs, see the following sites and papers:
 - [CRDT.tech website](https://crdt.tech)
