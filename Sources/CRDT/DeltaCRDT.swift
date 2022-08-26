@@ -36,6 +36,11 @@ public protocol DeltaCRDT: Replicable {
     /// CRDTs that maintain causal history for updates may throw errors if the state included within the delta you provide conflicts
     /// with the local CRDT's history.
     func mergeDelta(_ delta: Delta) throws -> Self
-    
+
+    /// Updates the CRDT, merging in the updates provided by the delta you provide.
+    /// - Parameter delta: The incremental, partial state to merge.
+    ///
+    /// CRDTs that maintain causal history for updates may throw errors if the state included within the delta you provide conflicts
+    /// with the local CRDT's history.
     mutating func mergingDelta(_ delta: Delta) throws
 }

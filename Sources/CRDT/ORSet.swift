@@ -105,7 +105,7 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
 }
 
 extension ORSet: Replicable {
-    /// Returns a new counter by merging two set instances.
+    /// Returns a new set by merging two set instances.
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
     /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
@@ -127,7 +127,15 @@ extension ORSet: Replicable {
         copy.currentTimestamp = max(currentTimestamp, other.currentTimestamp)
         return copy
     }
-    
+
+    /// Merges the delta you provide from another set.
+    ///
+    /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
+    /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
+    /// This provides a deterministic output, but could be surprising.
+    /// A set may have values that reflect being added or removed, depending on the underlying metadata.
+    ///
+    /// - Parameter other: The counter to merge.
     public mutating func merging(with other: ORSet) {
         metadataByValue = other.metadataByValue.reduce(into: metadataByValue) { result, entry in
             let firstMetadata = result[entry.key]
@@ -140,7 +148,6 @@ extension ORSet: Replicable {
         }
         currentTimestamp = max(currentTimestamp, other.currentTimestamp)
     }
-
 }
 
 extension ORSet: DeltaCRDT {
@@ -170,31 +177,29 @@ extension ORSet: DeltaCRDT {
 
     /// The current state of the ORSet.
     public var state: ORSetState {
-        get {
-            // The composed, compressed state to compare consists of a list of all the collaborators (represented
-            // by the actorId in the LamportTimestamps) with their highest value for clock.
-            var maxClockValueByActor: [ActorID: UInt64]
-            maxClockValueByActor = metadataByValue.reduce(into: [:]) { partialResult, valueMetaData in
-                // Do the accumulated keys already reference an actorID from our CRDT?
-                if partialResult.keys.contains(valueMetaData.value.lamportTimestamp.actorId) {
-                    // Our local CRDT knows of this actorId, so only include the value if the
-                    // Lamport clock of the local data element's timestamp is larger than the accumulated
-                    // Lamport clock for the actorId.
-                    if let latestKnownClock = partialResult[valueMetaData.value.lamportTimestamp.actorId],
-                       latestKnownClock < valueMetaData.value.lamportTimestamp.clock
-                    {
-                        partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
-                    }
-                } else {
-                    // The local CRDT doesn't know about this actorId, so add it to the outgoing state being
-                    // accumulated into partialResult, including the current Lamport clock value as the current
-                    // latest value. If there is more than one entry by this actorId, the if check above this
-                    // updates the timestamp to any later values.
+        // The composed, compressed state to compare consists of a list of all the collaborators (represented
+        // by the actorId in the LamportTimestamps) with their highest value for clock.
+        var maxClockValueByActor: [ActorID: UInt64]
+        maxClockValueByActor = metadataByValue.reduce(into: [:]) { partialResult, valueMetaData in
+            // Do the accumulated keys already reference an actorID from our CRDT?
+            if partialResult.keys.contains(valueMetaData.value.lamportTimestamp.actorId) {
+                // Our local CRDT knows of this actorId, so only include the value if the
+                // Lamport clock of the local data element's timestamp is larger than the accumulated
+                // Lamport clock for the actorId.
+                if let latestKnownClock = partialResult[valueMetaData.value.lamportTimestamp.actorId],
+                   latestKnownClock < valueMetaData.value.lamportTimestamp.clock
+                {
                     partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
                 }
+            } else {
+                // The local CRDT doesn't know about this actorId, so add it to the outgoing state being
+                // accumulated into partialResult, including the current Lamport clock value as the current
+                // latest value. If there is more than one entry by this actorId, the if check above this
+                // updates the timestamp to any later values.
+                partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
             }
-            return ORSetState(maxClockValueByActor: maxClockValueByActor)
         }
+        return ORSetState(maxClockValueByActor: maxClockValueByActor)
     }
 
     /// Computes and returns a diff from the current state of the ORSet to be used to update another instance.
@@ -261,13 +266,24 @@ extension ORSet: DeltaCRDT {
             // If the remote values have a more recent clock value for this actor instance,
             // increment the clock to that higher value.
             if metadata.lamportTimestamp.actorId == copy.currentTimestamp.actorId,
-                metadata.lamportTimestamp.clock > copy.currentTimestamp.clock {
+               metadata.lamportTimestamp.clock > copy.currentTimestamp.clock
+            {
                 copy.currentTimestamp.clock = metadata.lamportTimestamp.clock
             }
         }
         return copy
     }
-    
+
+    /// Merges the delta you provide from another set.
+    /// - Parameter delta: The incremental, partial state to merge.
+    ///
+    /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
+    /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
+    /// This provides a deterministic output, but could be surprising.
+    /// A set may have values that reflect being added or removed, depending on the underlying metadata.
+    ///
+    /// This method will throw an exception in the scenario where two identical Lamport timestamps (same clock, same actorId)
+    /// report conflicting metadata.
     public mutating func mergingDelta(_ delta: ORSetDelta) throws {
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
@@ -291,12 +307,12 @@ extension ORSet: DeltaCRDT {
             // If the remote values have a more recent clock value for this actor instance,
             // increment the clock to that higher value.
             if metadata.lamportTimestamp.actorId == currentTimestamp.actorId,
-                metadata.lamportTimestamp.clock > currentTimestamp.clock {
+               metadata.lamportTimestamp.clock > currentTimestamp.clock
+            {
                 currentTimestamp.clock = metadata.lamportTimestamp.clock
             }
         }
     }
-    
 }
 
 extension ORSet: Codable where T: Codable, ActorID: Codable {}

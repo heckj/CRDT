@@ -21,6 +21,7 @@
 ### Replicating a Set
 
 - ``CRDT/ORSet/merged(with:)``
+- ``CRDT/ORSet/merging(with:)``
 
 ### Delta-based Replicating
 
@@ -29,7 +30,7 @@
 - ``CRDT/ORSet/delta(_:)``
 - ``CRDT/ORSet/ORSetDelta``
 - ``CRDT/ORSet/mergeDelta(_:)``
-
+- ``CRDT/ORSet/mergingDelta(_:)``
 
 ### Decoding a Set
 

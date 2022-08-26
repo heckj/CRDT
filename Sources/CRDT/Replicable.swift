@@ -13,7 +13,9 @@ public protocol Replicable {
     /// Returns a new CRDT by merging two CRDT instances.
     /// - Parameter other: The CRDT to merge.
     func merged(with other: Self) -> Self
-    
+
+    /// Merges another CRDT into the current instance.
+    /// - Parameter other: The CRDT to merge.
     mutating func merging(with other: Self)
 }
 

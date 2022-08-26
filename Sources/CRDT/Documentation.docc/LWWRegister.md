@@ -13,13 +13,16 @@
 ### Replicating a Register
 
 - ``CRDT/LWWRegister/merged(with:)``
+- ``CRDT/LWWRegister/merging(with:)``
 
 ### Delta-based Replicating
 
 - ``CRDT/LWWRegister/state``
 - ``CRDT/LWWRegister/delta(_:)``
-- ``CRDT/LWWRegister/mergeDelta(_:)``
 - ``CRDT/LWWRegister/Atom``
+- ``CRDT/LWWRegister/mergeDelta(_:)``
+- ``CRDT/LWWRegister/mergingDelta(_:)``
+
 
 ### Decoding a Register
 

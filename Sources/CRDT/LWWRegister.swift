@@ -70,7 +70,7 @@ extension LWWRegister: Replicable {
             _storage = other._storage
         }
     }
-    
+
     /// Returns a new counter by merging two counter instances.
     /// - Parameter other: The counter to merge.
     public func merged(with other: LWWRegister) -> LWWRegister {
@@ -86,9 +86,7 @@ extension LWWRegister: DeltaCRDT {
 
     /// The current state of the CRDT.
     public var state: Atom {
-        get {
-            _storage
-        }
+        _storage
     }
 
     /// Computes and returns a diff from the current state of the counter to be used to update another instance.
@@ -106,13 +104,14 @@ extension LWWRegister: DeltaCRDT {
         newLWW._storage = _storage <= delta ? delta : _storage
         return newLWW
     }
-    
+
+    /// Merges another register into the current instance.
+    /// - Parameter other: The regsister to merge.
     public mutating func mergingDelta(_ delta: Atom) throws {
         if _storage <= delta {
             _storage = delta
         }
     }
-    
 }
 
 extension LWWRegister: Codable where T: Codable, ActorID: Codable {}
