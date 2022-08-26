@@ -9,7 +9,7 @@ import Foundation
 /// The `PNCounter` implementation is based on the PN Counter as described
 /// [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct PNCounter<ActorID: Hashable & Comparable & Sendable>: Sendable {
+public struct PNCounter<ActorID: Hashable & Comparable> {
     internal var pos_value: UInt
     internal var neg_value: UInt
     internal let selfId: ActorID
@@ -104,6 +104,9 @@ extension PNCounter: DeltaCRDT {
 
 extension PNCounter: Codable where ActorID: Codable {}
 extension PNCounter.PNCounterState: Codable where ActorID: Codable {}
+
+extension PNCounter: Sendable where ActorID: Sendable {}
+extension PNCounter.PNCounterState: Sendable where ActorID: Sendable {}
 
 extension PNCounter: Equatable {}
 extension PNCounter.PNCounterState: Equatable {}

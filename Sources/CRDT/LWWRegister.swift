@@ -12,9 +12,9 @@ import Foundation
 /// The `LWWRegister` implementation is based on an optimized CRDT register type as described in
 /// [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct LWWRegister<ActorID: Hashable & Comparable & Sendable, T: Sendable>: Sendable {
+public struct LWWRegister<ActorID: Hashable & Comparable, T> {
     /// A struct that represents the state of an LWWRegister
-    public struct Atom: Sendable {
+    public struct Atom {
         internal var value: T
         internal var clockId: WallclockTimestamp<ActorID>
 
@@ -104,6 +104,9 @@ extension LWWRegister: DeltaCRDT {
 
 extension LWWRegister: Codable where T: Codable, ActorID: Codable {}
 extension LWWRegister.Atom: Codable where T: Codable, ActorID: Codable {}
+
+extension LWWRegister: Sendable where T: Sendable, ActorID: Sendable {}
+extension LWWRegister.Atom: Sendable where T: Sendable, ActorID: Sendable {}
 
 extension LWWRegister: Equatable where T: Equatable {}
 extension LWWRegister.Atom: Equatable where T: Equatable {}
