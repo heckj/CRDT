@@ -9,7 +9,7 @@ import Foundation
 /// The comparable value of the actor identity is used to deterministically order of wallclock timestamps in the (unlikely, but possible) scenario
 /// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
 /// "at the same time".
-public struct WallclockTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
+public struct WallclockTimestamp<ActorID: Hashable & Comparable & Sendable>: Identifiable, Comparable, Sendable {
     internal var clock: TimeInterval
     internal var actorId: ActorID
 

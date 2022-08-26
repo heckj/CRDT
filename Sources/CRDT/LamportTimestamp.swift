@@ -7,7 +7,7 @@
 /// The comparable value of the actor identity is used to deterministically order of Lamport timestamps in the scenario
 /// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
 /// "at the same time".
-public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
+public struct LamportTimestamp<ActorID: Hashable & Comparable & Sendable>: Identifiable, Comparable, Sendable {
     internal var clock: UInt64 = 0
     internal var actorId: ActorID
 
