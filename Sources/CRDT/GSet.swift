@@ -9,7 +9,7 @@ import Foundation
 /// The `GSet` implementation is based on the grow-only set  described in
 /// [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct GSet<ActorID: Hashable & Comparable & Sendable, T: Hashable & Sendable>: Sendable {
+public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
     private var _storage: Set<T>
     internal var currentTimestamp: LamportTimestamp<ActorID>
 
@@ -120,6 +120,10 @@ extension GSet: DeltaCRDT {
 extension GSet: Codable where T: Codable, ActorID: Codable {}
 extension GSet.GSetState: Codable where T: Codable, ActorID: Codable {}
 extension GSet.GSetDelta: Codable where T: Codable, ActorID: Codable {}
+
+extension GSet: Sendable where T: Sendable, ActorID: Sendable {}
+extension GSet.GSetState: Sendable where T: Sendable, ActorID: Sendable {}
+extension GSet.GSetDelta: Sendable where T: Sendable, ActorID: Sendable {}
 
 extension GSet: Equatable where T: Equatable {}
 extension GSet.GSetState: Equatable where T: Equatable {}

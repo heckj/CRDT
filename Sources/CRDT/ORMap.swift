@@ -11,8 +11,8 @@ import Foundation
 /// The implementation is based on "An Optimized Conflict-free Replicated Set" by
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368).
-public struct ORMap<ActorID: Hashable & Comparable & Sendable, KEY: Hashable & Sendable, VALUE: Equatable & Sendable>: Sendable {
-    internal struct Metadata: Sendable, CustomStringConvertible {
+public struct ORMap<ActorID: Hashable & Comparable, KEY: Hashable, VALUE: Equatable> {
+    internal struct Metadata: CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
         var value: VALUE
@@ -242,6 +242,11 @@ extension ORMap: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
 extension ORMap.Metadata: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
 extension ORMap.ORMapState: Codable where KEY: Codable, ActorID: Codable {}
 extension ORMap.ORMapDelta: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
+
+extension ORMap: Sendable where KEY: Sendable, VALUE: Sendable, ActorID: Sendable {}
+extension ORMap.Metadata: Sendable where KEY: Sendable, VALUE: Sendable, ActorID: Sendable {}
+extension ORMap.ORMapState: Sendable where KEY: Sendable, ActorID: Sendable {}
+extension ORMap.ORMapDelta: Sendable where KEY: Sendable, VALUE: Sendable, ActorID: Sendable {}
 
 extension ORMap: Equatable where KEY: Equatable, VALUE: Equatable {}
 extension ORMap.Metadata: Equatable where KEY: Equatable, VALUE: Equatable {}
