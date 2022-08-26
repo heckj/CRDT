@@ -20,6 +20,7 @@
 ### Replicating a Map
 
 - ``CRDT/ORMap/merged(with:)``
+- ``CRDT/ORMap/merging(with:)``
 
 ### Delta-based Replicating
 
@@ -28,6 +29,7 @@
 - ``CRDT/ORMap/delta(_:)``
 - ``CRDT/ORMap/ORMapDelta``
 - ``CRDT/ORMap/mergeDelta(_:)``
+- ``CRDT/ORMap/mergingDelta(_:)``
 
 ### Decoding a Set
 

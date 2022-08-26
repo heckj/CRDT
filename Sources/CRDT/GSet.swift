@@ -57,11 +57,13 @@ public struct GSet<ActorID: Hashable & Comparable, T: Hashable> {
 }
 
 extension GSet: Replicable {
+    /// Merges another set into the current instance.
+    /// - Parameter other: The set to merge.
     public mutating func merging(with other: GSet<ActorID, T>) {
         _storage = _storage.union(other._storage)
         currentTimestamp.clock = max(currentTimestamp.clock, other.currentTimestamp.clock)
     }
-    
+
     /// Returns a new counter by merging two counter instances.
     /// - Parameter other: The counter to merge.
     public func merged(with other: GSet) -> GSet {
@@ -79,20 +81,18 @@ extension GSet: DeltaCRDT {
     public struct GSetState {
         let values: Set<T>
     }
-    
+
     /// A struct that represents the differences to be merged to replicate the set.
     public struct GSetDelta {
         let lamportClock: LamportTimestamp<ActorID>
         let values: Set<T>
     }
-    
+
     /// The current state of the CRDT.
     public var state: GSetState {
-        get {
-            GSetState(values: _storage)
-        }
+        GSetState(values: _storage)
     }
-    
+
     /// Computes and returns a diff from the current state of the counter to be used to update another instance.
     ///
     /// - Parameter state: The optional state of the remote CRDT.
@@ -108,7 +108,7 @@ extension GSet: DeltaCRDT {
             return GSetDelta(lamportClock: currentTimestamp, values: _storage)
         }
     }
-    
+
     /// Returns a new instance of an set with the delta you provide merged into the current set.
     /// - Parameter delta: The incremental, partial state to merge.
     public func mergeDelta(_ delta: GSetDelta) -> Self {
@@ -121,13 +121,14 @@ extension GSet: DeltaCRDT {
         return copy
     }
 
+    /// Merges the delta you provide from another set.
+    /// - Parameter delta: The incremental, partial state to merge.
     public mutating func mergingDelta(_ delta: GSetDelta) {
         // Merging two grow-only sets is (conveniently) the union of the two sets
         _storage = values.union(delta.values)
         // The clock isn't used for ordering or merging, so updating it isn't strictly needed.
         currentTimestamp.clock = max(currentTimestamp.clock, delta.lamportClock.clock)
     }
-
 }
 
 extension GSet: Codable where T: Codable, ActorID: Codable {}

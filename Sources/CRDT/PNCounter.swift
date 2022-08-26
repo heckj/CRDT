@@ -65,12 +65,13 @@ extension PNCounter: Replicable {
         copy.neg_value = max(other.neg_value, neg_value)
         return copy
     }
-    
+
+    /// Merges another counter into the current instance.
+    /// - Parameter other: The counter to merge.
     public mutating func merging(with other: PNCounter<ActorID>) {
         pos_value = max(other.pos_value, pos_value)
         neg_value = max(other.neg_value, neg_value)
     }
-    
 }
 
 extension PNCounter: DeltaCRDT {
@@ -85,9 +86,7 @@ extension PNCounter: DeltaCRDT {
 
     /// The current state of the CRDT.
     public var state: PNCounterState {
-        get {
-            PNCounterState(pos: pos_value, neg: neg_value)
-        }
+        PNCounterState(pos: pos_value, neg: neg_value)
     }
 
     /// Computes and returns a diff from the current state of the counter to be used to update another instance.
@@ -98,7 +97,7 @@ extension PNCounter: DeltaCRDT {
         PNCounterState(pos: pos_value, neg: neg_value)
     }
 
-    /// Returns a new instance of an counter with the delta you provide merged into the current counter.
+    /// Returns a new instance of a counter with the delta you provide merged into the current counter.
     /// - Parameter delta: The incremental, partial state to merge.
     public func mergeDelta(_ delta: PNCounterState) -> Self {
         var copy = self
@@ -106,12 +105,13 @@ extension PNCounter: DeltaCRDT {
         copy.neg_value = max(delta.neg, neg_value)
         return copy
     }
-    
+
+    /// Merges the delta you provide merged into the current counter.
+    /// - Parameter delta: The incremental, partial state to merge.
     public mutating func mergingDelta(_ delta: PNCounterState) throws {
         pos_value = max(delta.pos, pos_value)
         neg_value = max(delta.neg, neg_value)
     }
-
 }
 
 extension PNCounter: Codable where ActorID: Codable {}

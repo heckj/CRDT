@@ -20,12 +20,15 @@
 ### Replicating a Set
 
 - ``CRDT/GSet/merged(with:)``
+- ``CRDT/GSet/merging(with:)``
 
 ### Delta-based Replicating
 
 - ``CRDT/GSet/state``
+- ``CRDT/GSet/GSetState``
 - ``CRDT/GSet/delta(_:)``
 - ``CRDT/GSet/mergeDelta(_:)``
+- ``CRDT/GSet/mergingDelta(_:)``
 - ``CRDT/GSet/GSetDelta``
 
 ### Decoding a Set

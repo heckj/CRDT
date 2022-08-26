@@ -38,11 +38,12 @@ public struct GCounter<ActorID: Hashable & Comparable> {
 }
 
 extension GCounter: Replicable {
-    
-    public mutating func merging(with other: GCounter<ActorID>) {
+    /// Merges another counter into the current instance.
+    /// - Parameter other: The counter to merge.
+    public mutating func merging(with other: Self) {
         _storage = max(value, other._storage)
     }
-    
+
     /// Returns a new counter by merging two counter instances.
     /// - Parameter other: The counter to merge.
     public func merged(with other: Self) -> Self {
@@ -53,12 +54,9 @@ extension GCounter: Replicable {
 }
 
 extension GCounter: DeltaCRDT {
-    
     /// The current state of the CRDT.
     public var state: UInt {
-        get {
-            _storage
-        }
+        _storage
     }
 
     /// Computes and returns a diff from the current state of the counter to be used to update another instance.
@@ -76,11 +74,12 @@ extension GCounter: DeltaCRDT {
         copy._storage = max(_storage, delta)
         return copy
     }
-    
+
+    /// Merges the delta you provide merged into the current counter.
+    /// - Parameter delta: The incremental, partial state to merge.
     public mutating func mergingDelta(_ delta: UInt) throws {
         _storage = max(_storage, delta)
     }
-    
 }
 
 extension GCounter: Codable where ActorID: Codable {}
