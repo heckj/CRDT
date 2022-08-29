@@ -170,12 +170,12 @@ extension ORSet: DeltaCRDT {
         let maxClockValueByActor: [ActorID: UInt64]
     }
 
-    /// The set of changes to bring another ORSet instance up to the same state.
+    /// The set of changes to bring another set instance up to the same state.
     public struct ORSetDelta {
         let updates: [T: Metadata]
     }
 
-    /// The current state of the ORSet.
+    /// The current state of the set.
     public var state: ORSetState {
         // The composed, compressed state to compare consists of a list of all the collaborators (represented
         // by the actorId in the LamportTimestamps) with their highest value for clock.
@@ -202,12 +202,12 @@ extension ORSet: DeltaCRDT {
         return ORSetState(maxClockValueByActor: maxClockValueByActor)
     }
 
-    /// Computes and returns a diff from the current state of the ORSet to be used to update another instance.
+    /// Computes and returns a diff from the current state of the set to be used to update another instance.
     ///
-    /// If you don't provide a state from another ORSet instance, the returned delta represents the full state.
+    /// If you don't provide a state from another set instance, the returned delta represents the full state.
     ///
-    /// - Parameter state: The optional state of the remote ORSet.
-    /// - Returns: The changes to be merged into the ORSet instance that provided the state to converge its state with this instance.
+    /// - Parameter state: The optional state of the remote set.
+    /// - Returns: The changes to be merged into the set instance that provided the state to converge its state with this instance.
     public func delta(_ otherInstanceState: ORSetState?) -> ORSetDelta {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxClockValueByActor: [ActorID: UInt64] = otherInstanceState?.maxClockValueByActor else {
@@ -232,7 +232,7 @@ extension ORSet: DeltaCRDT {
         return ORSetDelta(updates: statesToReplicate)
     }
 
-    /// Returns a new instance of an ORSet with the delta you provide merged into the current ORSet.
+    /// Returns a new instance of a set with the delta you provide merged into the current set.
     /// - Parameter delta: The incremental, partial state to merge.
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict

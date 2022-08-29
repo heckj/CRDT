@@ -149,17 +149,17 @@ extension ORMap: DeltaCRDT {
     // That said, if you find and fix a bug in these protocol conformance methods, PLEASE double check
     // the peer implementation in `ORSet.swift` and fix any issues there as well.
 
-    /// The minimal state for an ORSet to compute diffs for replication.
+    /// The minimal state for a map to compute diffs for replication.
     public struct ORMapState {
         let maxClockValueByActor: [ActorID: UInt64]
     }
 
-    /// The set of changes to bring another ORSet instance up to the same state.
+    /// The set of changes to bring another map instance up to the same state.
     public struct ORMapDelta {
         let updates: [KEY: Metadata]
     }
 
-    /// The current state of the ORSet.
+    /// The current state of the map.
     public var state: ORMapState {
         // The composed, compressed state to compare consists of a list of all the collaborators (represented
         // by the actorId in the LamportTimestamps) with their highest value for clock.
@@ -186,12 +186,12 @@ extension ORMap: DeltaCRDT {
         return ORMapState(maxClockValueByActor: maxClockValueByActor)
     }
 
-    /// Computes and returns a diff from the current state of the ORSet to be used to update another instance.
+    /// Computes and returns a diff from the current state of the map to be used to update another instance.
     ///
-    /// If you don't provide a state from another ORSet instance, the returned delta represents the full state.
+    /// If you don't provide a state from another map instance, the returned delta represents the full state.
     ///
-    /// - Parameter state: The optional state of the remote ORSet.
-    /// - Returns: The changes to be merged into the ORSet instance that provided the state to converge its state with this instance.
+    /// - Parameter state: The optional state of the remote map.
+    /// - Returns: The changes to be merged into the map instance that provided the state to converge its state with this instance.
     public func delta(_ otherInstanceState: ORMapState?) -> ORMapDelta {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxClockValueByActor: [ActorID: UInt64] = otherInstanceState?.maxClockValueByActor else {
@@ -216,7 +216,7 @@ extension ORMap: DeltaCRDT {
         return ORMapDelta(updates: statesToReplicate)
     }
 
-    /// Returns a new instance of an ORSet with the delta you provide merged into the current ORSet.
+    /// Returns a new instance of a map with the delta you provide merged into the current map.
     /// - Parameter delta: The incremental, partial state to merge.
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
