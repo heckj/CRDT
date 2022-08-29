@@ -20,7 +20,7 @@ CRDT Type | Description
 ``CRDT/ORSet`` | An Observed-Removed set
 ``CRDT/ORMap`` | An Observed-Removed map
 
-For more information on CRDTs and their algorithms, see the [CRDT.tech website](https://crdt.tech), or
+For more information on CRDTs and the algorithms behind them, see the [CRDT.tech website](https://crdt.tech), or
 [Wikipedia's page on CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type).
 
 ## Topics
