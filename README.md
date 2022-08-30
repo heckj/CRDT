@@ -50,19 +50,7 @@ Other Swift implementations of CRDTs:
 
 ## Benchmarks
 
-To run the benchmarks:
-
-    swift run -c release crdt-benchmark run setbenchmarks --cycles 5
-
-Then you can render results into a chart:
-
-    swift run -c release crdt-benchmark render setbenchmarks setbenchmarks-chart.png
-
-Comparing against stored benchmark:
-
-    swift run -c release crdt-benchmark results compare setbenchmarks new-setbenchmarks
-
 Running the library:
 
-    swift run -c release crdt-benchmark library run Benchmarks/results.json --library Benchmarks/Library.json --cycles 4 --mode replace-all
+    swift run -c release crdt-benchmark library run Benchmarks/results.json --library Benchmarks/Library.json --cycles 5 --mode replace-all
     swift run -c release crdt-benchmark library render Benchmarks/results.json --library Benchmarks/Library.json --output Benchmarks

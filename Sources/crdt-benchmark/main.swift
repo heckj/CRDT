@@ -149,5 +149,60 @@ benchmark.add(
     }
 }
 
+benchmark.registerInputGenerator(for: (Benchmark.Insertions, Benchmark.Insertions).self) { size in
+    (Benchmark.Insertions(count: size), Benchmark.Insertions(count: size))
+}
+
+benchmark.add(
+    title: "ORSet<String,Int> merging random",
+    input: (Benchmark.Insertions, Benchmark.Insertions).self
+) { input1, input2 in
+    { timer in
+        var setA = ORSet<String, Int>(actorId: "A", input1.values)
+        let setB = ORSet<String, Int>(actorId: "B", input2.values)
+        timer.measure {
+            setA.merging(with: setB)
+        }
+        blackHole(setA)
+        blackHole(setB)
+    }
+}
+
+benchmark.add(
+    title: "ORSet<String,Int> merged random",
+    input: (Benchmark.Insertions, Benchmark.Insertions).self
+) { input1, input2 in
+    { timer in
+        let setA = ORSet<String, Int>(actorId: "A", input1.values)
+        let setB = ORSet<String, Int>(actorId: "B", input2.values)
+        timer.measure {
+            let x = setA.merged(with: setB)
+            blackHole(x)
+        }
+        blackHole(setA)
+        blackHole(setB)
+    }
+}
+
+benchmark.add(
+    title: "ORSet<String,Int> delta merged random",
+    input: (Benchmark.Insertions, Benchmark.Insertions).self
+) { input1, input2 in
+    { timer in
+        let setA = ORSet<String, Int>(actorId: "A", input1.values)
+        let setB = ORSet<String, Int>(actorId: "B", input2.values)
+
+        timer.measure {
+            let diff = setA.delta(setB.state)
+            do {
+                let x = try setB.mergeDelta(diff)
+                blackHole(x)
+            } catch {}
+        }
+        blackHole(setA)
+        blackHole(setB)
+    }
+}
+
 // Execute the benchmark tool with the above definitions.
 benchmark.main()

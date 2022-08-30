@@ -31,5 +31,14 @@
         "Map remove"
       ]
     },
+    {
+      "kind": "chart",
+      "title": "ORSet merged (copy) vs merging (mutating) vs compute-and-merge diff",
+      "tasks": [
+        "ORSet<String,Int> merging random",
+        "ORSet<String,Int> merged random",
+        "ORSet<String,Int> delta merged random",
+      ]
+    },
   ]
 }
