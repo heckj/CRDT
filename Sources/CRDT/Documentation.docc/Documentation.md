@@ -1,6 +1,6 @@
 # ``CRDT``
 
-Seamlessly, consistently, and asynchronously replicate data. 
+Seamlessly, consistently, and asynchronously replicate data.
 
 ## Overview
 
@@ -50,6 +50,7 @@ For more information on CRDTs and the algorithms behind them, see the [CRDT.tech
 
 ### Replication Protocols
 
+- <doc:ReplicatingCRDTs>
 - ``CRDT/Replicable``
 - ``CRDT/PartiallyOrderable``
 - ``CRDT/DeltaCRDT``
