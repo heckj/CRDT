@@ -6,9 +6,8 @@ import CRDT
 // - https://github.com/apple/swift-collections/blob/main/Benchmarks/Benchmarks/SetBenchmarks.swift
 // - https://github.com/apple/swift-collections/blob/main/Benchmarks/Benchmarks/OrderedSetBenchmarks.swift
 // - https://github.com/apple/swift-collections/blob/main/Benchmarks/Benchmarks/DictionaryBenchmarks.swift
-
-
-// NOTE(heckj): Implementation detail for the benchmarks. When they're running, each run has a "size" associated
+//
+// Implementation detail for the benchmarks. When they're running, each run has a "size" associated
 // with it, and that flows to the inputs that the task provides to your closure. There are 4 different default
 // 'input generators' registered and immediately available:
 //
@@ -64,6 +63,34 @@ benchmark.add(
 }
 
 benchmark.addSimple(
+    title: "ORMap<String,Int,String> insert",
+    input: [Int].self
+) { input in
+    var map = ORMap<String, Int, String>(actorId: "A")
+    for i in input {
+        map[i]=String(i)
+    }
+    precondition(map.count == input.count)
+    blackHole(map)
+}
+
+benchmark.add(
+    title: "ORMap<String,Int,String> remove",
+    input: ([Int], [Int]).self
+) { input, removals in
+    { timer in
+        var map = ORMap<String, Int, String>(actorId: "A")
+        timer.measure {
+            for i in removals {
+                map[i]=nil
+            }
+        }
+        precondition(map.count == 0)
+        blackHole(map)
+    }
+}
+
+benchmark.addSimple(
     title: "Set insert",
     input: [Int].self
 ) { input in
@@ -88,6 +115,37 @@ benchmark.add(
         }
         precondition(set.count == 0)
         blackHole(set)
+    }
+}
+
+benchmark.addSimple(
+    title: "Map insert",
+    input: [Int].self
+) { input in
+    var map = Dictionary<Int,String>()
+    for i in input {
+        map[i]=String(i)
+    }
+    precondition(map.count == input.count)
+    blackHole(map)
+}
+
+benchmark.add(
+    title: "Map remove",
+    input: ([Int], [Int]).self
+) { input, removals in
+    { timer in
+        var map = Dictionary<Int,String>()
+        for i in input {
+            map[i]=String(i)
+        }
+        timer.measure {
+            for i in removals {
+                map[i]=nil
+            }
+        }
+        precondition(map.count == 0)
+        blackHole(map)
     }
 }
 // Execute the benchmark tool with the above definitions.
