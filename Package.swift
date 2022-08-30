@@ -15,9 +15,11 @@ let package = Package(
             name: "CRDT",
             targets: ["CRDT"]
         ),
+        .executable(name: "crdt-benchmark", targets: ["crdt-benchmark"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-collections-benchmark", from: "0.0.1"),
     ],
     targets: [
         .target(
@@ -27,6 +29,13 @@ let package = Package(
         .testTarget(
             name: "CRDTTests",
             dependencies: ["CRDT"]
+        ),
+        .executableTarget(
+            name: "crdt-benchmark",
+            dependencies: [
+                "CRDT",
+                .product(name: "CollectionsBenchmark", package: "swift-collections-benchmark"),
+            ]
         ),
     ]
 )

@@ -47,3 +47,22 @@ Other Swift implementations of CRDTs:
 - https://github.com/archagon/crdt-playground
   - article: http://archagon.net/blog/2018/03/24/data-laced-with-history/
 - Obj.io's video series: https://talk.objc.io/episodes/S01E294-crdts-introduction
+
+## Benchmarks
+
+To run the benchmarks:
+
+    swift run -c release crdt-benchmark run setbenchmarks --cycles 5
+
+Then you can render results into a chart:
+
+    swift run -c release crdt-benchmark render setbenchmarks setbenchmarks-chart.png
+
+Comparing against stored benchmark:
+
+    swift run -c release crdt-benchmark results compare setbenchmarks new-setbenchmarks
+
+Running the library:
+
+    swift run -c release crdt-benchmark library run Benchmarks/results.json --library Benchmarks/Library.json --cycles 3 --mode replace-all
+    swift run -c release crdt-benchmark library render Benchmarks/results.json --library Benchmarks/Library.json --output Benchmarks

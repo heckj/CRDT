@@ -1,0 +1,25 @@
+{
+  "kind": "group",
+  "title": "All results",
+  "directory": "Results",
+  "contents": [
+    {
+      "kind": "chart",
+      "title": "GSet",
+      "tasks": [
+        "GSet<String,Int> insert",
+        "Set insert",
+      ]
+    },
+    {
+      "kind": "chart",
+      "title": "ORSet",
+      "tasks": [
+        "ORSet<String,Int> insert",
+        "ORSet<String,Int> remove",
+        "Set insert",
+        "Set remove"
+      ]
+    },
+  ]
+}
