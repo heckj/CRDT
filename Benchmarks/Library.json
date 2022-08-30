@@ -21,5 +21,15 @@
         "Set remove"
       ]
     },
+    {
+      "kind": "chart",
+      "title": "ORMap",
+      "tasks": [
+        "ORMap<String,Int,String> insert",
+        "ORMap<String,Int,String> remove",
+        "Map insert",
+        "Map remove"
+      ]
+    },
   ]
 }

@@ -64,5 +64,5 @@ Comparing against stored benchmark:
 
 Running the library:
 
-    swift run -c release crdt-benchmark library run Benchmarks/results.json --library Benchmarks/Library.json --cycles 3 --mode replace-all
+    swift run -c release crdt-benchmark library run Benchmarks/results.json --library Benchmarks/Library.json --cycles 4 --mode replace-all
     swift run -c release crdt-benchmark library render Benchmarks/results.json --library Benchmarks/Library.json --output Benchmarks
