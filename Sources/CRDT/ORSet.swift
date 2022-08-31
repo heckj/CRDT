@@ -2,8 +2,6 @@
 //  ORSet.swift
 //
 
-import Foundation
-
 /// An Observed-Remove Set.
 ///
 /// The `ORSet` can add and remove items from the set, compared to a ``GSet``, which can only add.

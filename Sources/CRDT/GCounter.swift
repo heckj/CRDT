@@ -2,8 +2,6 @@
 //  GCounter.swift
 //
 
-import Foundation
-
 /// A Grow-only Counter.
 ///
 /// The `GCounter` implementation is based on the grow-only counter described in

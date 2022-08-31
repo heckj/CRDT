@@ -2,8 +2,6 @@
 //  ORMap.swift
 //
 
-import Foundation
-
 /// An Observed-Remove Map.
 ///
 /// The `ORMap` adds,  removes, and updates items from a dictionary-like structure.

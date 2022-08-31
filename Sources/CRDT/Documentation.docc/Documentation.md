@@ -47,6 +47,10 @@ For more information on CRDTs and the algorithms behind them, see the [CRDT.tech
 
 - ``CRDT/ORMap``
 
+### Lists
+
+- ``CRDT/List``
+
 ### Timestamps
 
 - ``CRDT/LamportTimestamp``
