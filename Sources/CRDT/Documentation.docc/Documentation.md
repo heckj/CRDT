@@ -25,6 +25,10 @@ For more information on CRDTs and the algorithms behind them, see the [CRDT.tech
 
 ## Topics
 
+### Essentials
+
+- <doc:UsingCRDTs>
+
 ### Counters
 
 - ``CRDT/GCounter``
