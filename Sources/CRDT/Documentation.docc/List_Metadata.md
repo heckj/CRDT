@@ -3,15 +3,23 @@
 
 ## Topics
 
-### Creating Metadata
+### Creating List Metadata
 
-- ``CRDT/List/MetaData/init(id:anchor:value:)``
+- ``CRDT/List/Metadata/init(id:anchor:value:)``
+
+### Inspecting List Metadata
+
+- ``CRDT/List/Metadata/id-2w9gg``
+- ``CRDT/List/Metadata/id-4n3w3``
+- ``CRDT/List/Metadata/anchor``
+- ``CRDT/List/Metadata/isDeleted``
+- ``CRDT/List/Metadata/value``
+- ``CRDT/List/Metadata/description``
 
 ### Decoding an ORSet State
 
-- ``CRDT/List/MetaData/init(from:)``
+- ``CRDT/List/Metadata/init(from:)``
 
 ### Debugging and Optimization Methods
 
-- ``CRDT/ORSet/ORSetState/sizeInBytes()``
-
+- ``CRDT/List/Metadata/sizeInBytes()``
