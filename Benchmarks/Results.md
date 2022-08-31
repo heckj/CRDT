@@ -20,5 +20,9 @@ Click to expand individual items below.
     <summary>04: ORSet merged (copy) vs merging (mutating) vs compute-and-merge diff</summary>
     <img src="Results/04%20ORSet%20merged%20(copy)%20vs%20merging%20(mutating)%20vs%20compute-and-merge%20diff.png">
   </details>
+  <details>
+    <summary>05: List append and insertion</summary>
+    <img src="Results/05%20List%20append%20and%20insertion.png">
+  </details>
   </ul>
 </details>

@@ -204,5 +204,29 @@ benchmark.add(
     }
 }
 
+benchmark.addSimple(
+    title: "List append",
+    input: [Int].self
+) { input in
+    var list = List<String, Int>(actorId: "a")
+    for i in input {
+        list.append(i)
+    }
+    precondition(list.count == input.count)
+    blackHole(list)
+}
+
+benchmark.addSimple(
+    title: "List insertion",
+    input: Benchmark.Insertions.self
+) { input in
+    var list = List<String, Int>(actorId: "a")
+    for i in input.values {
+        list.insert(i, at: i)
+    }
+    precondition(list.count == input.values.count)
+    blackHole(list)
+}
+
 // Execute the benchmark tool with the above definitions.
 benchmark.main()

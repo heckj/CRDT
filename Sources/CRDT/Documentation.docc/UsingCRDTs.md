@@ -29,7 +29,8 @@ The number of collaborators is constrained to the number of different values tha
 For example, if you used `UInt8`, you could support up to 255 collaboration instances.
 
 The choice of type impacts how much memory is required as additional tracking information for each of the types.
-In ``ORSet``, ``ORMap``, and `SEQ` the combination of the both the size of the `ActorID` and the size of the Lamport timestamp are used to track the history of each element.
+In ``ORSet``, ``ORMap``, and ``List`` the combination of the both the size of the `ActorID` and the size of the Lamport timestamp are used to track the history of each element.
+The causal tree implementation of ``List`` includes an additional metadata to track the parent id within the causal tree.  
 
 
 ### Memory Overhead
@@ -39,7 +40,7 @@ These types require a constant amount of memory, regardless of the number of cha
 Additional memory is needed to track the history when you can add and remove values, as is the case with the ``ORSet`` and ``ORMap`` types.
 The memory needed to track the history when you can add, remove, and update unordered elements is slightly higher, and the total memory grows with the upper bound of the sum of all keys added and removed from these types.
 The most memory is required to track history when you can add, remove, and maintain an ordered set of values.
-The memory needed for `SEQ` grows with the combination of all additions, removals, and edits to the array.
+The memory needed for `List` grows with the combination of all additions, removals, and edits to the array.
 
 ### Seamless Replication Doesn't Imply Correctness 
 
