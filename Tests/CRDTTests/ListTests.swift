@@ -12,6 +12,8 @@ final class ListTests: XCTestCase {
     override func setUp() async throws {
         a = List(actorId: "a", ["a"])
         b = List(actorId: "b", ["h", "e", "l", "l", "o"])
+        b.append("!")
+        b.remove(at: 5)
     }
 
     func testBareInit() {
@@ -33,8 +35,8 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(a.tombstones.count, 0)
 
         XCTAssertEqual(b.count, 5)
-        XCTAssertEqual(b.currentTimestamp.clock, 5)
-        XCTAssertEqual(b.tombstones.count, 0)
+        XCTAssertEqual(b.currentTimestamp.clock, 6)
+        XCTAssertEqual(b.tombstones.count, 1)
     }
 
     func testAppendingValue() {
@@ -51,15 +53,15 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(b.values, ["h", "a", "l", "l", "o"])
 
         XCTAssertEqual(b.count, 5)
-        XCTAssertEqual(b.currentTimestamp.clock, 6)
-        XCTAssertEqual(b.tombstones.count, 1)
+        XCTAssertEqual(b.currentTimestamp.clock, 7)
+        XCTAssertEqual(b.tombstones.count, 2)
     }
 
     func testRemovingValue() {
         b.remove(at: 4)
         XCTAssertEqual(b.values, ["h", "e", "l", "l"])
         XCTAssertEqual(b.activeValues.count, 4)
-        XCTAssertEqual(b.tombstones.count, 1)
+        XCTAssertEqual(b.tombstones.count, 2)
     }
 
     func testCount() {
@@ -103,72 +105,65 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(a.activeValues[0].description, "[nil<-[1-a], deleted: false, value: a]")
         XCTAssertEqual(b.activeValues[4].description, "[[4-b]<-[5-b], deleted: false, value: o]")
     }
-//
-//    func testDeltaState_state() async {
-//        let state = a.state
-//        XCTAssertNotNil(state)
-//        XCTAssertEqual(Array(state.maxClockValueByActor.keys), [a.currentTimestamp.actorId])
-//        XCTAssertEqual(Array(state.maxClockValueByActor.values), [a.currentTimestamp.clock])
-//    }
-//
-//    func testDeltaState_nilDelta() async {
-//        let a_nil_delta = a.delta(nil)
-//        // print(a_nil_delta)
-//        XCTAssertNotNil(a_nil_delta)
-//        XCTAssertEqual(a_nil_delta.updates.count, 1)
-//        XCTAssertEqual(a_nil_delta.updates, a.metadataByDictKey)
-//    }
-//
-//    func testDeltaState_delta() async {
-//        let a_delta = a.delta(b.state)
-//        XCTAssertEqual(a_delta.updates.count, 1)
-//        XCTAssertEqual(a_delta.updates, a.metadataByDictKey)
-//    }
-//
-//    func testDeltaState_mergeDeltas() async throws {
-//        // equiv direct merge
-//        // let c = a.merged(with: b)
-//        let delta = b.delta(a.state)
-//        let c = try a.mergeDelta(delta)
-//        XCTAssertEqual(c.values.sorted(), b.values.sorted())
-//        XCTAssertEqual(c.keys.sorted(), b.keys.sorted())
-//    }
-//
-//    func testDeltaState_mergeDelta() async throws {
-//        // equiv direct merge
-//        // let c = a.merged(with: b)
-//        let delta = b.delta(a.state)
-//        let c = try a.mergeDelta(delta)
-//        XCTAssertEqual(c.values.sorted(), b.values.sorted())
-//        XCTAssertEqual(c.keys.sorted(), b.keys.sorted())
-//    }
-//
-//    func testUnrelatedMerges() async throws {
-//        let ormap_1 = ORMap(actorId: UInt(31), ["a": 1, "b": 2, "c": 3, "d": 4])
-//        let ormap_2 = ORMap(actorId: UInt(13), ["e": 5, "f": 6])
-//
-//        let diff_a = ormap_1.delta(ormap_2.state)
-//        // diff_a is the delta from map 1
-//        XCTAssertNotNil(diff_a)
-//        XCTAssertEqual(diff_a.updates.count, 4)
-//
-//        let diff_b = ormap_2.delta(ormap_1.state)
-//        // diff_b is the delta from map 2
-//        XCTAssertNotNil(diff_b)
-//        XCTAssertEqual(diff_b.updates.count, 2)
-//
-//        // merge the diff from map 1 into map 2
-//        let mergedFrom1 = try ormap_2.mergeDelta(diff_a)
-//        XCTAssertEqual(mergedFrom1.count, 6)
-//
-//        // merge the diff from map 2 into map 1
-//        let mergedFrom2 = try ormap_1.mergeDelta(diff_b)
-//        XCTAssertEqual(mergedFrom2.count, 6)
-//
-//        XCTAssertEqual(mergedFrom1.values.sorted(), mergedFrom2.values.sorted())
-//        XCTAssertEqual(mergedFrom1.keys.sorted(), mergedFrom2.keys.sorted())
-//    }
-//
+
+    func testDeltaState_stateA() async {
+        let state = a.state
+        XCTAssertNotNil(state)
+        XCTAssertEqual(Array(state.maxActiveClockValueByActor.keys), [a.currentTimestamp.actorId])
+        XCTAssertEqual(Array(state.maxActiveClockValueByActor.values), [a.currentTimestamp.clock])
+        XCTAssertEqual(Array(state.maxTombstoneClockValueByActor.keys), [])
+        XCTAssertEqual(Array(state.maxTombstoneClockValueByActor.values), [])
+    }
+
+    func testDeltaState_stateB() async {
+        let state = b.state
+        XCTAssertNotNil(state)
+        XCTAssertEqual(Array(state.maxActiveClockValueByActor.keys), ["b"])
+        XCTAssertEqual(Array(state.maxActiveClockValueByActor.values), [5])
+        XCTAssertEqual(Array(state.maxTombstoneClockValueByActor.keys), ["b"])
+        XCTAssertEqual(Array(state.maxTombstoneClockValueByActor.values), [6])
+    }
+
+    func testDeltaState_nilDelta() async {
+        let a_nil_delta = a.delta(nil)
+        // print(a_nil_delta)
+        XCTAssertNotNil(a_nil_delta)
+        XCTAssertEqual(a_nil_delta.values.count, 1)
+        XCTAssertEqual(a_nil_delta.values, a.activeValues)
+    }
+
+    func testDeltaState_deltaFromA() async {
+        let a_delta = a.delta(b.state)
+        XCTAssertEqual(a_delta.values.count, 1)
+        XCTAssertEqual(a_delta.values.filter(\.isDeleted).map(\.value), [])
+        XCTAssertEqual(a_delta.values.filter { !$0.isDeleted }.map(\.value), ["a"])
+    }
+
+    func testDeltaState_deltaFromB() async {
+        let b_delta = b.delta(a.state)
+        XCTAssertEqual(b_delta.values.count, 6)
+        XCTAssertEqual(b_delta.values.filter(\.isDeleted).map(\.value), ["!"])
+        XCTAssertEqual(b_delta.values.filter { !$0.isDeleted }.map(\.value), ["h", "e", "l", "l", "o"])
+    }
+
+    func testDeltaState_mergeDeltasFromB() async throws {
+        // equiv direct merge
+        // let c = a.merged(with: b)
+        let delta = b.delta(a.state)
+        let c = try a.mergeDelta(delta)
+        XCTAssertEqual(c.values, ["h", "e", "l", "l", "o", "a"])
+        XCTAssertEqual(c.tombstones.count, 1)
+    }
+
+    func testDeltaState_mergeDeltaFromA() async throws {
+        // equiv direct merge
+        // let c = a.merged(with: b)
+        let delta = b.delta(a.state)
+        let c = try a.mergeDelta(delta)
+        XCTAssertEqual(c.values, ["h", "e", "l", "l", "o", "a"])
+        XCTAssertEqual(c.tombstones.count, 1)
+    }
+
 //    func testCorruptedHistoryMerge() async throws {
 //        // actor id's intentionally identical, but with different data inside them,
 //        // which *shouldn't* happen in practice, but this represents a throwing case
@@ -277,92 +272,88 @@ final class ListTests: XCTestCase {
 //            XCTFail("When merging map 1 into map 2, the value `c` has conflicting metadata (one is deleted, the other not) so it should throw an exception.")
 //        }
 //    }
-//
-//    func testMergeSameCausalUpdateMerge() async throws {
-//        var ormap_1 = ORMap<UInt, String, Int>(actorId: UInt(31), ["a": 1, "b": 2, "c": 3])
-//        var ormap_2 = ORMap<UInt, String, Int>(actorId: UInt(13))
-//        XCTAssertEqual(ormap_1.count, 3)
-//        XCTAssertEqual(ormap_2.count, 0)
-//
-//        let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state)
-//        // diff_a is the delta from map 1
-//        XCTAssertNotNil(replicatedDeltaFromInitial1)
-//        XCTAssertEqual(replicatedDeltaFromInitial1.updates.count, 3)
-//
-//        // overwrite ormap_2 with the version merged with 1
-//        ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFromInitial1)
-//        XCTAssertEqual(ormap_2.count, 3)
-//        XCTAssertEqual(ormap_2.values.sorted(), ormap_1.values.sorted())
-//        XCTAssertEqual(ormap_2.keys.sorted(), ormap_1.keys.sorted())
-//
-//        // Update the first and second independently with the same 'causal' ordering and values
-//        ormap_2["d"] = 4
-//        ormap_1["d"] = 4
-//        XCTAssertEqual(ormap_1.count, 4)
-//        XCTAssertEqual(ormap_2.count, 4)
-//
-//        // check the delta's in both directions:
-//        let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state)
-//        let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state)
-//
-//        XCTAssertNotNil(replicatedDeltaFrom1)
-//        XCTAssertNotNil(replicatedDeltaFrom2)
-//        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
-//        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
-//
-//        // This *should* be a legit merge, since the metadata isn't in conflict.
-//        do {
-//            ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFrom1)
-//            ormap_1 = try ormap_1.mergeDelta(replicatedDeltaFrom2)
-//        } catch {
-//            // print(error)
-//            XCTFail()
-//        }
-//        XCTAssertEqual(ormap_2.values.sorted(), ormap_1.values.sorted())
-//        XCTAssertEqual(ormap_2.keys.sorted(), ormap_1.keys.sorted())
-//    }
-//
-//    func testMergeDifferentCausalUpdateMerge() async throws {
-//        var ormap_1 = ORMap<UInt, String, Int>(actorId: UInt(31), ["a": 1, "b": 2, "c": 3])
-//        var ormap_2 = ORMap<UInt, String, Int>(actorId: UInt(13))
-//        XCTAssertEqual(ormap_1.count, 3)
-//        XCTAssertEqual(ormap_2.count, 0)
-//
-//        let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state)
-//        // diff_a is the delta from map 1
-//        XCTAssertNotNil(replicatedDeltaFromInitial1)
-//        XCTAssertEqual(replicatedDeltaFromInitial1.updates.count, 3)
-//
-//        // overwrite ormap_2 with the version merged with 1
-//        ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFromInitial1)
-//        XCTAssertEqual(ormap_2.count, 3)
-//        XCTAssertEqual(ormap_2.values.sorted(), ormap_1.values.sorted())
-//        XCTAssertEqual(ormap_2.keys.sorted(), ormap_1.keys.sorted())
-//
-//        // Update the first and second independently with the same 'causal' ordering and values
-//        ormap_2["c"] = 99
-//        ormap_1["c"] = 100
-//        XCTAssertEqual(ormap_1.count, 3)
-//        XCTAssertEqual(ormap_2.count, 3)
-//
-//        // check the delta's in both directions:
-//        let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state)
-//        let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state)
-//
-//        XCTAssertNotNil(replicatedDeltaFrom1)
-//        XCTAssertNotNil(replicatedDeltaFrom2)
-//        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
-//        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
-//
-//        // This *should* be a legit merge, since the metadata isn't in conflict.
-//        do {
-//            ormap_2 = try ormap_2.mergeDelta(replicatedDeltaFrom1)
-//            ormap_1 = try ormap_1.mergeDelta(replicatedDeltaFrom2)
-//        } catch {
-//            // print(error)
-//            XCTFail()
-//        }
-//        XCTAssertEqual(ormap_2.values.sorted(), ormap_1.values.sorted())
-//        XCTAssertEqual(ormap_2.keys.sorted(), ormap_1.keys.sorted())
-//    }
+
+    func testMergeSameCausalUpdateMerge() async throws {
+        var list1 = List<Int, Int>(actorId: 13, [1, 2, 3, 4, 5])
+        var list2 = List<Int, Int>(actorId: 22)
+
+        XCTAssertEqual(list1.count, 5)
+        XCTAssertEqual(list2.count, 0)
+
+        let replicatedDeltaFromInitial1 = list1.delta(list2.state)
+        // diff_a is the delta from map 1
+        XCTAssertNotNil(replicatedDeltaFromInitial1)
+        XCTAssertEqual(replicatedDeltaFromInitial1.values.count, 5)
+
+        // overwrite list2 with the version merged with 1
+        list2 = try list2.mergeDelta(replicatedDeltaFromInitial1)
+        XCTAssertEqual(list2.count, 5)
+        XCTAssertEqual(list2.values, list1.values)
+
+        // Update the first and second independently with the same 'causal' ordering and values
+        list1.append(4)
+        list2.append(5)
+        XCTAssertEqual(list1.count, 6)
+        XCTAssertEqual(list2.count, 6)
+
+        // check the delta's in both directions:
+        let replicatedDeltaFrom1 = list1.delta(list2.state)
+        let replicatedDeltaFrom2 = list2.delta(list1.state)
+
+        XCTAssertNotNil(replicatedDeltaFrom1)
+        XCTAssertNotNil(replicatedDeltaFrom2)
+        XCTAssertEqual(replicatedDeltaFrom1.values.count, 1)
+        XCTAssertEqual(replicatedDeltaFrom2.values.count, 1)
+
+        // This *should* be a legit merge, since the metadata isn't in conflict.
+        do {
+            list2 = try list2.mergeDelta(replicatedDeltaFrom1)
+            list1 = try list1.mergeDelta(replicatedDeltaFrom2)
+        } catch {
+            // print(error)
+            XCTFail()
+        }
+        XCTAssertEqual(list2.values, list1.values)
+    }
+
+    func testMergeDifferentCausalUpdateMerge() async throws {
+        var list1 = List<Int, Int>(actorId: 13, [1, 2, 3, 4, 5])
+        var list2 = List<Int, Int>(actorId: 22)
+        XCTAssertEqual(list1.count, 5)
+        XCTAssertEqual(list2.count, 0)
+
+        let replicatedDeltaFromInitial1 = list1.delta(list2.state)
+        // diff_a is the delta from map 1
+        XCTAssertNotNil(replicatedDeltaFromInitial1)
+        XCTAssertEqual(replicatedDeltaFromInitial1.values.count, 5)
+
+        // overwrite list2 with the version merged with 1
+        list2 = try list2.mergeDelta(replicatedDeltaFromInitial1)
+        XCTAssertEqual(list2.count, 5)
+        XCTAssertEqual(list2.values, list1.values)
+
+        list1.append(4)
+        list2.remove(at: 0)
+        XCTAssertEqual(list1.count, 6)
+        XCTAssertEqual(list2.count, 4)
+
+        // check the delta's in both directions:
+        let replicatedDeltaFrom1 = list1.delta(list2.state)
+        let replicatedDeltaFrom2 = list2.delta(list1.state)
+
+        XCTAssertNotNil(replicatedDeltaFrom1)
+        XCTAssertNotNil(replicatedDeltaFrom2)
+        XCTAssertEqual(replicatedDeltaFrom1.values.count, 1)
+        XCTAssertEqual(replicatedDeltaFrom2.values.count, 1)
+
+        // This *should* be a legit merge, since the metadata isn't in conflict.
+        do {
+            list2 = try list2.mergeDelta(replicatedDeltaFrom1)
+            list1 = try list1.mergeDelta(replicatedDeltaFrom2)
+        } catch {
+            // print(error)
+            XCTFail()
+        }
+        XCTAssertEqual(list2.values, list1.values)
+    }
 }

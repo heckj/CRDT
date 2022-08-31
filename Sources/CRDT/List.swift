@@ -53,6 +53,28 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
             // IFF the first tuples are equivalent.
             (id.clock, id.actorId) > (other.id.clock, other.id.actorId)
         }
+
+        /// Returns a list of metadata ordered according to a preorder traversal of a causal tree.
+        ///
+        /// For each element, we insert the element itself first, then the child (anchored) subtrees from left to right.
+        /// - Parameter unordered: The metadata list to sort.
+        public static func ordered(fromUnordered unordered: [Metadata]) -> [Metadata] {
+            let sorted = unordered.sorted { $0.ordered(beforeSibling: $1) }
+            let anchoredByAnchorId: [Metadata.ID?: [Metadata]] = .init(grouping: sorted) { $0.anchor }
+            var result: [Metadata] = []
+
+            func addDecendants(of containers: [Metadata]) {
+                for container in containers {
+                    result.append(container)
+                    guard let anchoredToValueContainer = anchoredByAnchorId[container.id] else { continue }
+                    addDecendants(of: anchoredToValueContainer)
+                }
+            }
+
+            let roots = anchoredByAnchorId[nil] ?? []
+            addDecendants(of: roots)
+            return result
+        }
     }
 
     // A combination of Lamport timestamp & actor ID
@@ -139,7 +161,7 @@ extension List: Replicable {
             !tombstoneIds.contains($0.id) && encounteredIds.insert($0.id).inserted
         }
 
-        let resultMetadataWithTombstones = Self.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
+        let resultMetadataWithTombstones = Metadata.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
         let resultMetadata = resultMetadataWithTombstones.filter { !$0.isDeleted }
         activeValues = resultMetadata
         tombstones = combinedUniqueTombstones
@@ -157,7 +179,7 @@ extension List: Replicable {
             !tombstoneIds.contains($0.id) && encounteredIds.insert($0.id).inserted
         }
 
-        let resultMetadataWithTombstones = Self.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
+        let resultMetadataWithTombstones = Metadata.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
         let resultMetadata = resultMetadataWithTombstones.filter { !$0.isDeleted }
 
         var copy = self
@@ -166,25 +188,179 @@ extension List: Replicable {
         copy.currentTimestamp.clock = Swift.max(currentTimestamp.clock, other.currentTimestamp.clock)
         return copy
     }
+}
 
-    /// Not just sorted, but ordered according to a preorder traversal of the causal tree.
-    /// For each element, we insert the element itself first, then the child (anchored) subtrees from left to right.
-    private static func ordered(fromUnordered unordered: [Metadata]) -> [Metadata] {
-        let sorted = unordered.sorted { $0.ordered(beforeSibling: $1) }
-        let anchoredByAnchorId: [Metadata.ID?: [Metadata]] = .init(grouping: sorted) { $0.anchor }
-        var result: [Metadata] = []
+extension List: DeltaCRDT {
+    /// The current essential state information from a list's causal tree.
+    public struct CausalTreeState {
+        /// A dictionary of the maximum clock values for each collaboration instance identifier for active values.
+        let maxActiveClockValueByActor: [ActorID: UInt64]
+        /// A dictionary of the maximum clock values for each collaboration instance identifier for tombstone values.
+        let maxTombstoneClockValueByActor: [ActorID: UInt64]
+    }
 
-        func addDecendants(of containers: [Metadata]) {
-            for container in containers {
-                result.append(container)
-                guard let anchoredToValueContainer = anchoredByAnchorId[container.id] else { continue }
-                addDecendants(of: anchoredToValueContainer)
+    /// The updates needed to replicate the list.
+    public struct CausalTreeDelta {
+        let values: [Metadata]
+        var maxClockValue: UInt64 {
+            values.reduce(into: 0) { partialResult, metadata in
+                partialResult = Swift.max(partialResult, metadata.id.clock)
             }
         }
+    }
 
-        let roots = anchoredByAnchorId[nil] ?? []
-        addDecendants(of: roots)
-        return result
+    /// The current state of the map.
+    public var state: CausalTreeState {
+        let maxActiveClocks: [ActorID: UInt64] = activeValues
+            .reduce(into: [:]) { partialResult, valueMetaData in
+                // Do the accumulated keys already reference an actorID from our CRDT?
+                if partialResult.keys.contains(valueMetaData.id.actorId) {
+                    // Our local CRDT knows of this actorId, so only include the value if the
+                    // Lamport clock of the local data element's timestamp is larger than the accumulated
+                    // Lamport clock for the actorId.
+                    if let latestKnownClock = partialResult[valueMetaData.id.actorId],
+                       latestKnownClock < valueMetaData.id.clock
+                    {
+                        partialResult[valueMetaData.id.actorId] = valueMetaData.id.clock
+                    }
+                } else {
+                    // The local CRDT doesn't know about this actorId, so add it to the outgoing state being
+                    // accumulated into partialResult, including the current Lamport clock value as the current
+                    // latest value. If there is more than one entry by this actorId, the if check above this
+                    // updates the timestamp to any later values.
+                    partialResult[valueMetaData.id.actorId] = valueMetaData.id.clock
+                }
+            }
+        // same algorithm, applied for the recorded tombstones
+        let maxTombstoneClocks: [ActorID: UInt64] = tombstones
+            .reduce(into: [:]) { partialResult, valueMetaData in
+                if partialResult.keys.contains(valueMetaData.id.actorId) {
+                    if let latestKnownClock = partialResult[valueMetaData.id.actorId],
+                       latestKnownClock < valueMetaData.id.clock
+                    {
+                        partialResult[valueMetaData.id.actorId] = valueMetaData.id.clock
+                    }
+                } else {
+                    partialResult[valueMetaData.id.actorId] = valueMetaData.id.clock
+                }
+            }
+        return CausalTreeState(maxActiveClockValueByActor: maxActiveClocks, maxTombstoneClockValueByActor: maxTombstoneClocks)
+    }
+
+    /// Computes and returns a diff from the current state of the list to be used to update another instance.
+    ///
+    /// If you don't provide a state from another list instance, the returned delta represents the full state.
+    ///
+    /// - Parameter state: The optional state of the remote list.
+    /// - Returns: The changes to be merged into the list to converge it with this instance.
+    public func delta(_ otherInstanceState: CausalTreeState?) -> CausalTreeDelta {
+        // In the case of a null state being provided, the delta is all current values and their metadata:
+        guard let maxActiveClocks: [ActorID: UInt64] = otherInstanceState?.maxActiveClockValueByActor,
+              let maxTombstoneClocks: [ActorID: UInt64] = otherInstanceState?.maxTombstoneClockValueByActor
+        else {
+            return CausalTreeDelta(values: activeValues + tombstones)
+        }
+        // To determine the changes that need to be replicated to the instance that provided the state:
+        // Iterate through the combined collection of active values and then tombstones:
+        let activeStatesToReplicate: [Metadata] = activeValues
+            .reduce(into: []) { partialResult, metadata in
+                // - If there are actorIds in our CRDT that the incoming state doesn't list, include those values
+                // in the delta. It means the remote CRDT hasn't seen the collaborator that the actorId represents.
+                if !maxActiveClocks.keys.contains(metadata.id.actorId) {
+                    partialResult.append(metadata)
+                } else
+                // - If any clock values are greater than the max clock for the actorIds they listed, provide them.
+                if let maxClockForThisActor = maxActiveClocks[metadata.id.actorId],
+                   metadata.id.clock > maxClockForThisActor
+                {
+                    partialResult.append(metadata)
+                }
+            }
+        let tombStonesToReplicate: [Metadata] = tombstones
+            .reduce(into: []) { partialResult, metadata in
+                // - If there are actorIds in our CRDT that the incoming state doesn't list, include those values
+                // in the delta. It means the remote CRDT hasn't seen the collaborator that the actorId represents.
+                if !maxTombstoneClocks.keys.contains(metadata.id.actorId) {
+                    partialResult.append(metadata)
+                } else
+                // - If any clock values are greater than the max clock for the actorIds they listed, provide them.
+                if let maxClockForThisActor = maxTombstoneClocks[metadata.id.actorId],
+                   metadata.id.clock > maxClockForThisActor
+                {
+                    partialResult.append(metadata)
+                }
+            }
+        return CausalTreeDelta(values: activeStatesToReplicate + tombStonesToReplicate)
+    }
+
+    /// Returns a new instance of a map with the delta you provide merged into the current map.
+    /// - Parameter delta: The incremental, partial state to merge.
+    ///
+    /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
+    /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
+    ///
+    /// This method will throw an exception in the scenario where two identical Lamport timestamps (same clock, same actorId)
+    /// report conflicting metadata.
+    public func mergeDelta(_ delta: CausalTreeDelta) throws -> Self {
+        let deltaTombstones = delta.values.filter(\.isDeleted)
+        let deltaActiveValues = delta.values.filter { !$0.isDeleted }
+
+        // Create a deduplicated list of all the tombstone entries
+        let combinedUniqueTombstones = (tombstones + deltaTombstones).filterDuplicates { $0.id }
+        // Use that to get a list of all the tombstone IDs
+        let tombstoneIds = combinedUniqueTombstones.map(\.id)
+        var encounteredIds: Set<Metadata.ID> = []
+
+        let unorderedContainers = (activeValues + deltaActiveValues).filter {
+            // include any active metadata that isn't in the new combined list of tombstone Ids
+            // We use and the verified insertion into a set to de-duplicate any active Ids
+            !tombstoneIds.contains($0.id) && encounteredIds.insert($0.id).inserted
+        }
+
+        let resultMetadataWithTombstones = Metadata.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
+        let resultMetadata = resultMetadataWithTombstones.filter { !$0.isDeleted }
+
+        var copy = self
+        copy.activeValues = resultMetadata
+        copy.tombstones = combinedUniqueTombstones
+        copy.currentTimestamp.clock = Swift.max(currentTimestamp.clock, delta.maxClockValue)
+        return copy
+    }
+
+    /// Merges the delta you provide from another set.
+    /// - Parameter delta: The incremental, partial state to merge.
+    ///
+    /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
+    /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
+    ///
+    /// This method will throw an exception in the scenario where two identical Lamport timestamps (same clock, same actorId)
+    /// report conflicting metadata.
+    public mutating func mergingDelta(_ delta: CausalTreeDelta) throws {
+        let deltaTombstones = delta.values.filter(\.isDeleted)
+        let deltaActiveValues = delta.values.filter { !$0.isDeleted }
+
+        let combinedUniqueTombstones = (tombstones + deltaTombstones).filterDuplicates { $0.id }
+        let tombstoneIds = combinedUniqueTombstones.map(\.id)
+
+        var encounteredIds: Set<Metadata.ID> = []
+        let unorderedContainers = (activeValues + deltaActiveValues).filter {
+            // include values that aren't in the list of tombstone Ids and
+            // (side effect) have been inserted into our 'encounteredIds' set.
+            !tombstoneIds.contains($0.id) && encounteredIds.insert($0.id).inserted
+        }
+
+        // Order the combined sets together into a single, pre-order causal tree ordering.
+        let orderedAndCombinedMetadata = Metadata.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
+        // Then pull out the active values from that pre-ordered list.
+        let resultMetadata = orderedAndCombinedMetadata.filter { !$0.isDeleted }
+
+        activeValues = resultMetadata
+        tombstones = combinedUniqueTombstones
+        currentTimestamp.clock = Swift.max(currentTimestamp.clock, delta.maxClockValue)
     }
 }
 

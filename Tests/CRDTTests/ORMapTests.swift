@@ -304,7 +304,7 @@ final class ORMapTests: XCTestCase {
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)
         XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
-        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
+        XCTAssertEqual(replicatedDeltaFrom2.updates.count, 1)
 
         // This *should* be a legit merge, since the metadata isn't in conflict.
         do {
@@ -348,7 +348,7 @@ final class ORMapTests: XCTestCase {
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)
         XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
-        XCTAssertEqual(replicatedDeltaFrom1.updates.count, 1)
+        XCTAssertEqual(replicatedDeltaFrom2.updates.count, 1)
 
         // This *should* be a legit merge, since the metadata isn't in conflict.
         do {
