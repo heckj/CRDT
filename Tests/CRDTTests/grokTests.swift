@@ -108,5 +108,15 @@ final class grokTests: XCTestCase {
             print("Delta size of Set2 merging into Set1: \(orset_1.delta(orset_2.state).sizeInBytes())")
         }
 
+        func testListSizing() async throws {
+            let baseList: [String] = ["w", "o", "r", "l", "d"]
+            let causaltreeList = List<String, String>(actorId: "a", baseList)
+
+            print("causalTree List size: \(causaltreeList.sizeInBytes())")
+            print("base list size: \(baseList.sizeInBytes())")
+            print("expansion factor: \(Double(causaltreeList.sizeInBytes()) / Double(baseList.sizeInBytes()))")
+            // 21.733 times larger than a base list.
+        }
+
     #endif
 }
