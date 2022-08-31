@@ -7,34 +7,35 @@
 - ``CRDT/List/init(actorId:clock:)``
 - ``CRDT/List/init(actorId:clock:_:)``
 
-### Inspecting the Map
+### Inspecting the List
 
-- ``CRDT/ORMap/keys``
-- ``CRDT/ORMap/values``
-- ``CRDT/ORMap/count``
+- ``CRDT/List/values``
+- ``CRDT/List/count-45jo9``
+- ``CRDT/List/count-81npj``
 
-### Updating the Map
+### Accessing and Updating the List
 
-- ``CRDT/ORMap/subscript(_:)``
+- ``CRDT/List/append(_:)``
+- ``CRDT/List/insert(_:at:)``
+- ``CRDT/List/subscript(_:)-1e3oh``
+- ``CRDT/List/subscript(_:)-30506``
+- ``CRDT/List/subscript(_:)-7yguk``
+- ``CRDT/List/subscript(_:)-9r74a``
 
 ### Replicating a Map
 
-- ``CRDT/ORMap/merged(with:)``
-- ``CRDT/ORMap/merging(with:)``
+- ``CRDT/List/merged(with:)``
+- ``CRDT/List/merging(with:)``
 
 ### Delta-based Replicating
 
-- ``CRDT/ORMap/state``
-- ``CRDT/ORMap/ORMapState``
-- ``CRDT/ORMap/delta(_:)``
-- ``CRDT/ORMap/ORMapDelta``
-- ``CRDT/ORMap/mergeDelta(_:)``
-- ``CRDT/ORMap/mergingDelta(_:)``
+- ``CRDT/List/Metadata``
 
-### Decoding a Set
+### Decoding a List
 
-- ``CRDT/ORMap/init(from:)``
+- ``CRDT/List/init(from:)``
 
 ### Debugging and Optimization Methods
 
-- ``CRDT/ORMap/sizeInBytes()``
+- ``CRDT/List/sizeInBytes()``
+

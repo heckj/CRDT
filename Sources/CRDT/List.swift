@@ -7,13 +7,12 @@
 // Sourced from
 // https://github.com/appdecentral/replicatingtypes/blob/master/Sources/ReplicatingTypes/ReplicatingArray.swift
 
-/// A List CRDT.
+/// A causal-tree List.
 ///
 /// The `List` implementation is based a causal tree implementation, stored within array structures,
 /// as described in [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Equatable> {
-    
     /// Causal Tree Metadata
     public struct Metadata: CustomStringConvertible, Identifiable {
         /// A unique identifier, made up of a Lamport timestamp and the collaboration instance Id.
@@ -26,7 +25,7 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
         public var isDeleted: Bool = false
         /// The value of the associated list element.
         public var value: T
-        
+
         /// The description of the metadata.
         public var description: String {
             if let anchor = anchor {
@@ -35,7 +34,7 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
                 return "[nil<-\(id), deleted: \(isDeleted), value: \(value)]"
             }
         }
-        
+
         /// Creates a new instance of metadata with the ID, value, and optional anchor that you provide.
         /// - Parameters:
         ///   - id: The identifier for the metadata
@@ -46,7 +45,7 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
             self.anchor = anchor
             self.value = value
         }
-        
+
         /// Returns a Boolean value that indicates if this instance should be ordered before another instance.
         /// - Parameter other: The other metadata to compare.
         func ordered(beforeSibling other: Metadata) -> Bool {
@@ -57,30 +56,30 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
     }
 
     // A combination of Lamport timestamp & actor ID
-    private var currentTimestamp: LamportTimestamp<ActorID>
-    private var activeValues: [Metadata] = []
-    private var tombstones: [Metadata] = []
-    
+    internal var currentTimestamp: LamportTimestamp<ActorID>
+    internal var activeValues: [Metadata] = []
+    internal var tombstones: [Metadata] = []
+
     /// The values of the list.
     public var values: [T] { activeValues.map(\.value) }
-    
+
     /// The number of non-deleted values in the list.
     public var count: UInt64 { UInt64(activeValues.count) }
 
     // MARK: Init
-    
+
     /// Creates a new, empty list.
     /// - Parameter actorId: The collaboration instance identity.
-    public init(actorId: ActorID) {
-        currentTimestamp = LamportTimestamp(actorId: actorId)
+    public init(actorId: ActorID, clock: UInt64 = 0) {
+        currentTimestamp = LamportTimestamp(clock: clock, actorId: actorId)
     }
-    
+
     /// Creates a new list with the values you provide.
     /// - Parameters:
     ///   - actorId: The collaboration instance identity.
     ///   - values: The values to insert into the list.
-    public init(actorId: ActorID, _ values: [T]) {
-        currentTimestamp = LamportTimestamp(actorId: actorId)
+    public init(actorId: ActorID, clock: UInt64 = 0, _ values: [T]) {
+        currentTimestamp = LamportTimestamp(clock: clock, actorId: actorId)
         values.forEach { self.append($0) }
     }
 }
@@ -97,7 +96,7 @@ public extension List {
         let new = makeMetadata(withValue: newValue, forInsertingAtIndex: index)
         activeValues.insert(new, at: index)
     }
-    
+
     /// Appends a value onto the end of the list.
     /// - Parameter newValue: The value to add.
     mutating func append(_ newValue: T) {
@@ -129,7 +128,6 @@ public extension List {
 // MARK: Merging Lists
 
 extension List: Replicable {
-    
     /// Merges another list into the current instance.
     /// - Parameter other: The list to merge.
     public mutating func merging(with other: Self) {
@@ -143,11 +141,11 @@ extension List: Replicable {
 
         let resultMetadataWithTombstones = Self.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
         let resultMetadata = resultMetadataWithTombstones.filter { !$0.isDeleted }
-        self.activeValues = resultMetadata
-        self.tombstones = combinedUniqueTombstones
-        self.currentTimestamp.clock = Swift.max(currentTimestamp.clock, other.currentTimestamp.clock)
+        activeValues = resultMetadata
+        tombstones = combinedUniqueTombstones
+        currentTimestamp.clock = Swift.max(currentTimestamp.clock, other.currentTimestamp.clock)
     }
-    
+
     /// Returns a new list created by merging another list.
     /// - Parameter other: The list to merge.
     public func merged(with other: Self) -> Self {
@@ -234,3 +232,23 @@ private extension Array {
         return filter { encountered.insert(block($0)).inserted }
     }
 }
+
+#if DEBUG
+    extension List.Metadata: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            MemoryLayout<Bool>.size + id.sizeInBytes() + (anchor?.sizeInBytes() ?? 1) + MemoryLayout<T>.size(ofValue: value)
+        }
+    }
+
+    extension List: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            let tombstones = tombstones.reduce(into: 0) { partialResult, meta in
+                partialResult += meta.sizeInBytes()
+            }
+            let actives = activeValues.reduce(into: 0) { partialResult, meta in
+                partialResult += meta.sizeInBytes()
+            }
+            return currentTimestamp.sizeInBytes() + tombstones + actives
+        }
+    }
+#endif
