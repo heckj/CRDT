@@ -19,6 +19,7 @@ CRDT Type | Description
 ``CRDT/GSet`` | A grow-only set.
 ``CRDT/ORSet`` | An Observed-Removed set
 ``CRDT/ORMap`` | An Observed-Removed map
+``CRDT/List`` | A causal-tree list
 
 For more information on CRDTs and the algorithms behind them, see the [CRDT.tech website](https://crdt.tech), or
 [Wikipedia's page on CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type).

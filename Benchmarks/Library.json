@@ -40,5 +40,13 @@
         "ORSet<String,Int> delta merged random",
       ]
     },
+    {
+      "kind": "chart",
+      "title": "List append and insertion",
+      "tasks": [
+        "List append",
+        "List insertion",
+      ]
+    },
   ]
 }

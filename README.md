@@ -19,25 +19,16 @@ The [CRDT API documentation](https://swiftpackageindex.com/heckj/CRDT/main/docum
 - [X] G-Set (grow-only set)
 - [X] OR-Set (observed-remove set, with LWW add bias)
 - [X] OR-Map (observed-remove map, with LWW add or update bias)
-- [ ] Replicator
-
+- [X] List (causal-tree list)
 
 For more, general, information on CRDTs, see the following sites and papers:
 - [CRDT.tech website](https://crdt.tech)
 - [Wikipedia's page on CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type)
-- Two academic papers with implementation details:
-  - “[Conflict-free Replicated Data Types](https://arxiv.org/pdf/1805.06358.pdf)” by Nuno Preguiça, Carlos Baquero, and Marc Shapiro (2018)
-  - “[A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)” by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 
-Two very well established CRDT libraries used for collaborative text editing:
-- [Automerge](https://automerge.org)
-  - (video) [CRDTs: The Hard Parts](https://youtu.be/x7drE24geUw) by [Martin Kleppmann](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html))
-- [Yjs](https://yjs.dev) (and its multi-language port [Y-CRDT](https://github.com/y-crdt))
-  - Yrs data structure internals: https://bartoszsypytkowski.com/yrs-architecture/
+The implementations within this library were heavily based on algorithms described in 
+[Conflict-free Replicated Data Types](https://arxiv.org/pdf/1805.06358.pdf) by Nuno Preguiça, Carlos Baquero, and Marc Shapiro (2018)
 
-Articles discussing tradeoffs, algorithm details, and performance, specifically for sequence based CRDTs:
-- https://bartoszsypytkowski.com/yata/
-- https://josephg.com/blog/crdts-go-brrr/
+## Alternatives
 
 Other Swift implementations of CRDTs:
 - https://github.com/bluk/CRDT
@@ -45,9 +36,23 @@ Other Swift implementations of CRDTs:
     - article: https://appdecentral.com/2020/07/12/conflict-free-replicated-data-types-crdts-in-swift/
 - https://github.com/jamztang/CRDT
 - https://github.com/archagon/crdt-playground
-  - article: http://archagon.net/blog/2018/03/24/data-laced-with-history/
+  - related article: [Data Laced with History: Causal Trees & Operational CRDTs](http://archagon.net/blog/2018/03/24/data-laced-with-history/)
 - Obj.io's video series: https://talk.objc.io/episodes/S01E294-crdts-introduction
 
+Two very well established CRDT libraries used for collaborative text editing:
+- [Automerge](https://automerge.org)
+  - (video) [CRDTs: The Hard Parts](https://youtu.be/x7drE24geUw) by [Martin Kleppmann](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html))
+- [Yjs](https://yjs.dev) (and its multi-language port [Y-CRDT](https://github.com/y-crdt))
+  - Yrs data structure internals: https://bartoszsypytkowski.com/yrs-architecture/
+
+### Optimizations
+
+Articles discussing tradeoffs, algorithm details, and performance, specifically for sequence based CRDTs:
+- [Delta-state CRDTs: indexed sequences with YATA](https://bartoszsypytkowski.com/yata/)
+- [5000x faster CRDTs: An Adventure in Optimization](https://josephg.com/blog/crdts-go-brrr/)
+- [CRDTs: The Hard Parts](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html)
+  - [CRDTs: The Hard Parts video](https://youtu.be/x7drE24geUw)
+  
 ## Benchmarks
 
 Running the library:
