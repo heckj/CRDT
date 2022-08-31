@@ -2,8 +2,6 @@
 //  GSet.swift
 //
 
-import Foundation
-
 /// A Grow-only Set.
 ///
 /// The `GSet` implementation is based on the grow-only set  described in

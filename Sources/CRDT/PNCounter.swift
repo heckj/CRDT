@@ -2,8 +2,6 @@
 //  PNCounter.swift
 //
 
-import Foundation
-
 /// A Positive-Negative Counter.
 ///
 /// The `PNCounter` implementation is based on the PN Counter as described

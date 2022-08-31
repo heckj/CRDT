@@ -1,11 +1,11 @@
-# ``CRDT/ORMap``
+# ``CRDT/List``
 
 ## Topics
 
-### Creating a Set
+### Creating a List
 
-- ``CRDT/ORMap/init(actorId:clock:)``
-- ``CRDT/ORMap/init(actorId:clock:_:)``
+- ``CRDT/List/init(actorId:clock:)``
+- ``CRDT/List/init(actorId:clock:_:)``
 
 ### Inspecting the Map
 
@@ -31,7 +31,7 @@
 - ``CRDT/ORMap/mergeDelta(_:)``
 - ``CRDT/ORMap/mergingDelta(_:)``
 
-### Decoding a Map
+### Decoding a Set
 
 - ``CRDT/ORMap/init(from:)``
 
