@@ -14,6 +14,16 @@ final class ListTests: XCTestCase {
         b = List(actorId: "b", ["h", "e", "l", "l", "o"])
     }
 
+    func testBareInit() {
+        let z = List<String, String>(actorId: "∂")
+        XCTAssertEqual(z.values.count, 0)
+        XCTAssertEqual(z.currentTimestamp.actorId, "∂")
+        XCTAssertEqual(z.currentTimestamp.clock, 0)
+        XCTAssertEqual(z.count, 0)
+        XCTAssertEqual(z.values, [])
+        XCTAssertEqual(z.tombstones.count, 0)
+    }
+
     func testInitialCreation() {
         XCTAssertEqual(a.values.count, 1)
         XCTAssertEqual(a.currentTimestamp.actorId, "a")
@@ -32,9 +42,17 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(b.values, ["h", "e", "l", "l", "o", "!"])
     }
 
-    func testUpdatingValue() {
+    func testGettingBySubscript() {
+        XCTAssertEqual(b[1], "e")
+    }
+
+    func testUpdatingBySubscript() {
         b[1] = "a"
         XCTAssertEqual(b.values, ["h", "a", "l", "l", "o"])
+
+        XCTAssertEqual(b.count, 5)
+        XCTAssertEqual(b.currentTimestamp.clock, 6)
+        XCTAssertEqual(b.tombstones.count, 1)
     }
 
     func testRemovingValue() {
@@ -69,10 +87,21 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(e.values, f.values)
     }
 
+    func testInplaceMerging() {
+        let c = a.merged(with: b)
+        a.merging(with: b)
+        XCTAssertEqual(c.values, a.values)
+    }
+
     func testCodable() {
         let data = try! JSONEncoder().encode(b)
         let d = try! JSONDecoder().decode(List<String, String>.self, from: data)
         XCTAssertEqual(b, d)
+    }
+
+    func testMetadataDescription() {
+        XCTAssertEqual(a.activeValues[0].description, "[nil<-[1-a], deleted: false, value: a]")
+        XCTAssertEqual(b.activeValues[4].description, "[[4-b]<-[5-b], deleted: false, value: o]")
     }
 //
 //    func testDeltaState_state() async {

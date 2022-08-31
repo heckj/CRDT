@@ -10,4 +10,20 @@ import Foundation
         /// Returns the approximate size, in bytes, of the memory used.
         func sizeInBytes() -> Int
     }
+
+    extension String: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            maximumLengthOfBytes(using: .utf8)
+        }
+    }
+
+    extension Array: ApproxSizeable where Array.Element == String {
+        public func sizeInBytes() -> Int {
+            let eleSize = reduce(into: 0) { partialResult, element in
+                partialResult += element.sizeInBytes()
+            }
+            return eleSize
+        }
+    }
+
 #endif
