@@ -75,12 +75,12 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
             addDecendants(of: roots)
             return result
         }
-        
+
         /// Verifies that a set of metadata can be ordered and configured in a complete and consistent causal tree.
         /// - Parameter meta: The list of metadata to evaluate.
         /// - Returns: Returns `nil` if the metadata makes a consistent tree or a string indicating the reason otherwise.
         public static func verifyCausalTreeConsistency(_ meta: [Metadata]) -> String? {
-            let idsFromMetadata = meta.map { $0.id }
+            let idsFromMetadata = meta.map(\.id)
             let availableIds = Set<LamportTimestamp<ActorID>>(idsFromMetadata)
             if availableIds.count != idsFromMetadata.count {
                 // There was a duplicate ID somewhere in that list...
@@ -348,7 +348,7 @@ extension List: DeltaCRDT {
         if let errorString = Metadata.verifyCausalTreeConsistency(unorderedContainers + combinedUniqueTombstones) {
             throw CRDTMergeError.inconsistentCausalTree(errorString)
         }
-        
+
         let resultMetadataWithTombstones = Metadata.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
         let resultMetadata = resultMetadataWithTombstones.filter { !$0.isDeleted }
 
