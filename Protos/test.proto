@@ -1,4 +1,5 @@
 syntax = "proto3";
+package CRDT;
 
 message BookInfo {
    int64 id = 1;

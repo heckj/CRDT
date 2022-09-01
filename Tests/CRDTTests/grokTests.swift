@@ -55,13 +55,13 @@ final class grokTests: XCTestCase {
 
     func testProtoTwiddling() async throws {
         // Create a BookInfo object and populate it:
-        var info = BookInfo()
+        var info = CRDT_BookInfo()
         info.id = 1734
         info.title = "Really Interesting Book"
         info.author = "Jane Smith"
 
         // As above, but generating a read-only value:
-        let info2 = BookInfo.with {
+        let info2 = CRDT_BookInfo.with {
             $0.id = 1735
             $0.title = "Even More Interesting"
             $0.author = "Jane Q. Smith"
@@ -75,7 +75,7 @@ final class grokTests: XCTestCase {
         // size of binary structure: 40 bytes
 
         // Deserialize a received Data object from `binaryData`
-        let decodedInfo = try BookInfo(serializedData: binaryData)
+        let decodedInfo = try CRDT_BookInfo(serializedData: binaryData)
         XCTAssertEqual(info, decodedInfo)
 
         // Serialize to JSON format as a Data object
@@ -86,7 +86,7 @@ final class grokTests: XCTestCase {
         // {"id":"1734","title":"Really Interesting Book","author":"Jane Smith"}
 
         // Deserialize from JSON format from `jsonData`
-        let receivedFromJSON = try BookInfo(jsonUTF8Data: jsonData)
+        let receivedFromJSON = try CRDT_BookInfo(jsonUTF8Data: jsonData)
         XCTAssertEqual(info, receivedFromJSON)
     }
 
