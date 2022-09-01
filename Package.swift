@@ -24,16 +24,17 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-collections-benchmark", from: "0.0.1"),
+        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
     ],
     targets: [
         .target(
             name: "CRDT",
-            dependencies: [],
+            dependencies: [.product(name: "SwiftProtobuf", package: "swift-protobuf")],
             swiftSettings: globalSwiftSettings
         ),
         .testTarget(
             name: "CRDTTests",
-            dependencies: ["CRDT"]
+            dependencies: ["CRDT", .product(name: "SwiftProtobuf", package: "swift-protobuf")]
         ),
         .executableTarget(
             name: "crdt-benchmark",

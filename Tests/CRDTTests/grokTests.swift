@@ -53,6 +53,43 @@ final class grokTests: XCTestCase {
     ////        }
 //    }
 
+    func testProtoTwiddling() async throws {
+        // Create a BookInfo object and populate it:
+        var info = BookInfo()
+        info.id = 1734
+        info.title = "Really Interesting Book"
+        info.author = "Jane Smith"
+
+        // As above, but generating a read-only value:
+        let info2 = BookInfo.with {
+            $0.id = 1735
+            $0.title = "Even More Interesting"
+            $0.author = "Jane Q. Smith"
+        }
+        XCTAssertNotNil(info2)
+
+        // Serialize to binary protobuf format:
+        let binaryData: Data = try info.serializedData()
+
+        print("size of binary structure: \(binaryData.count) bytes")
+        // size of binary structure: 40 bytes
+
+        // Deserialize a received Data object from `binaryData`
+        let decodedInfo = try BookInfo(serializedData: binaryData)
+        XCTAssertEqual(info, decodedInfo)
+
+        // Serialize to JSON format as a Data object
+        let jsonData: Data = try info.jsonUTF8Data()
+        print("size of JSON structure: \(jsonData.count) bytes")
+        // size of JSON structure: 69 bytes
+        print(String(decoding: jsonData, as: UTF8.self))
+        // {"id":"1734","title":"Really Interesting Book","author":"Jane Smith"}
+
+        // Deserialize from JSON format from `jsonData`
+        let receivedFromJSON = try BookInfo(jsonUTF8Data: jsonData)
+        XCTAssertEqual(info, receivedFromJSON)
+    }
+
     #if DEBUG
         func testSizing() async throws {
             let gcounter_uint_hash = GCounter(actorID: UInt(32))
