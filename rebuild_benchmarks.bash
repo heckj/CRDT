@@ -6,9 +6,9 @@ set -x  # print a trace of commands as they execute
 swift run -c release crdt-benchmark \
     library run Benchmarks/results.json \
     --library Benchmarks/Library.json \
-    --cycles 5 \
+    --cycles 10 \
     --mode replace-all
-    
+
 swift run -c release crdt-benchmark \
     library render Benchmarks/results.json \
     --library Benchmarks/Library.json \
