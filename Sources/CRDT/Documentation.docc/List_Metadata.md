@@ -20,6 +20,11 @@
 
 - ``CRDT/List/Metadata/init(from:)``
 
+### Ordering Metadata into a Causal Tree
+
+- ``CRDT/List/Metadata/ordered(fromUnordered:)``
+- ``CRDT/List/Metadata/verifyCausalTreeConsistency(_:)``
+
 ### Debugging and Optimization Methods
 
 - ``CRDT/List/Metadata/sizeInBytes()``

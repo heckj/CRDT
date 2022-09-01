@@ -29,6 +29,12 @@
 
 ### Delta-based Replicating
 
+- ``CRDT/List/state``
+- ``CRDT/List/CausalTreeState``
+- ``CRDT/List/delta(_:)``
+- ``CRDT/List/CausalTreeDelta``
+- ``CRDT/List/mergeDelta(_:)``
+- ``CRDT/List/mergingDelta(_:)``
 - ``CRDT/List/Metadata``
 
 ### Decoding a List
