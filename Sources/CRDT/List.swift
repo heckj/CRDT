@@ -75,6 +75,25 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
             addDecendants(of: roots)
             return result
         }
+        
+        /// Verifies that a set of metadata can be ordered and configured in a complete and consistent causal tree.
+        /// - Parameter meta: The list of metadata to evaluate.
+        /// - Returns: Returns `nil` if the metadata makes a consistent tree or a string indicating the reason otherwise.
+        public static func verifyCausalTreeConsistency(_ meta: [Metadata]) -> String? {
+            let idsFromMetadata = meta.map { $0.id }
+            let availableIds = Set<LamportTimestamp<ActorID>>(idsFromMetadata)
+            if availableIds.count != idsFromMetadata.count {
+                // There was a duplicate ID somewhere in that list...
+                return "Two different metadata instances have identical Ids"
+            }
+            for m in meta {
+                if let anchorId = m.anchor, !availableIds.contains(anchorId) {
+                    // The anchor Id existed, but isn't in the list of available Ids
+                    return "Metadata id \(m.id) references anchor \(anchorId) which is not in the list of available metadata."
+                }
+            }
+            return nil
+        }
     }
 
     // A combination of Lamport timestamp & actor ID
@@ -211,6 +230,10 @@ extension List: DeltaCRDT {
 
     /// The current state of the map.
     public var state: CausalTreeState {
+        // We represent the state by the combined sets of the maximum values for the clocks for each actor that
+        // we know about. We can't "just combine" the tombstones and active values and pick a total max clock
+        // because the delete actions (those which result in tombstones) don't change the clock. Doing so would
+        // invalidate the causal tree parent structure ordering, so we need to track those separately.
         let maxActiveClocks: [ActorID: UInt64] = activeValues
             .reduce(into: [:]) { partialResult, valueMetaData in
                 // Do the accumulated keys already reference an actorID from our CRDT?
@@ -313,12 +336,19 @@ extension List: DeltaCRDT {
         let tombstoneIds = combinedUniqueTombstones.map(\.id)
         var encounteredIds: Set<Metadata.ID> = []
 
+        // Build an updated list of active values from the combination of the current active
+        // values, ones from the delta, and any current values that aren't in the combined
+        // tombstone list.
         let unorderedContainers = (activeValues + deltaActiveValues).filter {
             // include any active metadata that isn't in the new combined list of tombstone Ids
             // We use and the verified insertion into a set to de-duplicate any active Ids
             !tombstoneIds.contains($0.id) && encounteredIds.insert($0.id).inserted
         }
 
+        if let errorString = Metadata.verifyCausalTreeConsistency(unorderedContainers + combinedUniqueTombstones) {
+            throw CRDTMergeError.inconsistentCausalTree(errorString)
+        }
+        
         let resultMetadataWithTombstones = Metadata.ordered(fromUnordered: unorderedContainers + combinedUniqueTombstones)
         let resultMetadata = resultMetadataWithTombstones.filter { !$0.isDeleted }
 
@@ -367,18 +397,19 @@ extension List: DeltaCRDT {
 // MARK: Codable
 
 extension List: Codable where T: Codable, ActorID: Codable {}
-
 extension List.Metadata: Codable where T: Codable, ActorID: Codable {}
-
-// MARK: Equatable and Hashable
+extension List.CausalTreeDelta: Codable where T: Codable, ActorID: Codable {}
+extension List.CausalTreeState: Codable where T: Codable, ActorID: Codable {}
 
 extension List: Equatable where T: Equatable {}
-
 extension List.Metadata: Equatable where T: Equatable {}
+extension List.CausalTreeState: Equatable where T: Equatable, ActorID: Equatable {}
+extension List.CausalTreeDelta: Equatable where T: Equatable, ActorID: Equatable {}
 
 extension List: Hashable where T: Hashable {}
-
 extension List.Metadata: Hashable where T: Hashable {}
+extension List.CausalTreeState: Hashable where T: Hashable, ActorID: Hashable {}
+extension List.CausalTreeDelta: Hashable where T: Hashable, ActorID: Hashable {}
 
 // MARK: Collection and RandomAccessCollection
 
