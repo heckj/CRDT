@@ -5,6 +5,14 @@
 @testable import CRDT
 import XCTest
 
+extension List {
+    func verifyListConsistency() {
+        if let msg = Metadata.verifyCausalTreeConsistency(self.tombstones + self.activeValues) {
+            XCTFail(msg)
+        }
+    }
+}
+
 final class ListTests: XCTestCase {
     var a: List<String, String>!
     var b: List<String, String>!
@@ -15,7 +23,7 @@ final class ListTests: XCTestCase {
         b.append("!")
         b.remove(at: 5)
     }
-
+    
     func testBareInit() {
         let z = List<String, String>(actorId: "∂")
         XCTAssertEqual(z.values.count, 0)
@@ -24,6 +32,7 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(z.count, 0)
         XCTAssertEqual(z.values, [])
         XCTAssertEqual(z.tombstones.count, 0)
+        z.verifyListConsistency()
     }
 
     func testInitialCreation() {
@@ -33,15 +42,18 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(a.count, 1)
         XCTAssertEqual(a.values, ["a"])
         XCTAssertEqual(a.tombstones.count, 0)
-
+        a.verifyListConsistency()
+        
         XCTAssertEqual(b.count, 5)
         XCTAssertEqual(b.currentTimestamp.clock, 6)
         XCTAssertEqual(b.tombstones.count, 1)
+        b.verifyListConsistency()
     }
 
     func testAppendingValue() {
         b.append("!")
         XCTAssertEqual(b.values, ["h", "e", "l", "l", "o", "!"])
+        b.verifyListConsistency()
     }
 
     func testGettingBySubscript() {
@@ -55,6 +67,7 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(b.count, 5)
         XCTAssertEqual(b.currentTimestamp.clock, 7)
         XCTAssertEqual(b.tombstones.count, 2)
+        b.verifyListConsistency()
     }
 
     func testRemovingValue() {
@@ -62,6 +75,7 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(b.values, ["h", "e", "l", "l"])
         XCTAssertEqual(b.activeValues.count, 4)
         XCTAssertEqual(b.tombstones.count, 2)
+        b.verifyListConsistency()
     }
 
     func testCount() {
@@ -74,12 +88,17 @@ final class ListTests: XCTestCase {
         let e = c.merged(with: a)
         XCTAssertEqual(c.values, d.values)
         XCTAssertEqual(c.values, e.values)
+        c.verifyListConsistency()
+        d.verifyListConsistency()
+        e.verifyListConsistency()
     }
 
     func testCommutativity() {
         let c = a.merged(with: b)
         let d = b.merged(with: a)
         XCTAssertEqual(d.values, c.values)
+        c.verifyListConsistency()
+        d.verifyListConsistency()
     }
 
     func testAssociativity() {
@@ -87,18 +106,23 @@ final class ListTests: XCTestCase {
         let e = a.merged(with: b).merged(with: c)
         let f = a.merged(with: b.merged(with: c))
         XCTAssertEqual(e.values, f.values)
+        c.verifyListConsistency()
+        e.verifyListConsistency()
+        f.verifyListConsistency()
     }
 
     func testInplaceMerging() {
         let c = a.merged(with: b)
         a.merging(with: b)
         XCTAssertEqual(c.values, a.values)
+        c.verifyListConsistency()
     }
 
     func testCodable() {
         let data = try! JSONEncoder().encode(b)
         let d = try! JSONDecoder().decode(List<String, String>.self, from: data)
         XCTAssertEqual(b, d)
+        d.verifyListConsistency()
     }
 
     func testMetadataDescription() {
@@ -153,6 +177,7 @@ final class ListTests: XCTestCase {
         let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values, ["h", "e", "l", "l", "o", "a"])
         XCTAssertEqual(c.tombstones.count, 1)
+        c.verifyListConsistency()
     }
 
     func testDeltaState_mergeDeltaFromA() async throws {
@@ -162,117 +187,22 @@ final class ListTests: XCTestCase {
         let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values, ["h", "e", "l", "l", "o", "a"])
         XCTAssertEqual(c.tombstones.count, 1)
+        c.verifyListConsistency()
     }
 
-//    func testCorruptedHistoryMerge() async throws {
-//        // actor id's intentionally identical, but with different data inside them,
-//        // which *shouldn't* happen in practice, but this represents a throwing case
-//        // I wanted to get correctly established.
-//        var ormap_1 = ORMap<UInt, String, Int>(actorId: UInt(13))
-//        ormap_1["a"] = 1
-//        ormap_1["b"] = 2
-//        var ormap_2 = ORMap<UInt, String, Int>(actorId: UInt(13))
-//        ormap_2["a"] = 1
-//        ormap_2["b"] = 99
-//
-//        // The state's alone _won't_ show any changes, as the state
-//        // doesn't have any detail about the *content*.
-//
-//        let diff_a = ormap_1.delta(ormap_2.state)
-//        // diff_a is the delta from map 1
-//        XCTAssertNotNil(diff_a)
-//        XCTAssertEqual(diff_a.updates.count, 0)
-//
-//        let diff_b = ormap_2.delta(ormap_1.state)
-//        // diff_b is the delta from map 2
-//        XCTAssertNotNil(diff_b)
-//        XCTAssertEqual(diff_b.updates.count, 0)
-//
-//        // If we take the full replicate anywhere (ask for a delta
-//        // with a nil state) and then merge that, it'll throw the
-//        // exception related to corrupted/conflicting history.
-//
-//        let diff_full_a = ormap_1.delta(nil)
-//        XCTAssertNotNil(diff_full_a)
-//        XCTAssertEqual(diff_full_a.updates.count, 2)
-//
-//        let diff_full_b = ormap_2.delta(nil)
-//        XCTAssertNotNil(diff_full_b)
-//        XCTAssertEqual(diff_full_b.updates.count, 2)
-//
-//        do {
-//            //  I intentionally left these comments inline to make it easier
-//            //  for future-me to understand the data structure's being returned
-//            //  and reason about how it _should_ work.
-    ////
-    ////            print(ormap_2)
-    ////            ORMap<UInt, String, Int>(
-    ////                currentTimestamp: LamportTimestamp<2, 13>,
-    ////                metadataByDictKey: [
-    ////                    "a": [[1-13], deleted: false, value: 1],
-    ////                    "b": [[2-13], deleted: false, value: 99]
-    ////                ])
-    ////
-    ////            print(diff_full_a)
-    ////            ORMapDelta(updates: [
-    ////                "a": [[1-13], deleted: false, value: 1],
-    ////                "b": [[2-13], deleted: false, value: 2]
-    ////            ])
-//
-//            let _ = try ormap_2.mergeDelta(diff_full_a)
-//            XCTFail("When merging a full delta from map 1 into map 2, the value `b` has conflicting metadata so it should throw an exception.")
-//        } catch let CRDTMergeError.conflictingHistory(msg) {
-//            XCTAssertNotNil(msg)
-//            // print("error: \(msg)")
-    ////        error: The metadata for the map key c is conflicting.
-    ////                local: [[3-31], deleted: true, value: 3],
-    ////                remote: [[3-13], deleted: false, value: 3].
-//        }
-//    }
-//
-//    func testPreviousUnsyncedMergeWithConflictingMetadata() async throws {
-//        var ormap_1 = ORMap<UInt, String, Int>(actorId: UInt(13))
-//        ormap_1["a"] = 1
-//        ormap_1["b"] = 2
-//        ormap_1["c"] = 3
-//        var ormap_2 = ORMap<UInt, String, Int>(actorId: UInt(31))
-//        ormap_2["c"] = 3
-//        ormap_2["d"] = 4
-//        ormap_2["c"] = nil
-//        // the metadata for the entry for `c` is going to be in conflict, both by
-//        // Lamport timestamps ('2' vs '3') and the metadata in question (deleted vs not)
-//
-//        let diff_a = ormap_1.delta(ormap_2.state)
-//        // diff_a is the delta from map 1
-//        XCTAssertNotNil(diff_a)
-//        XCTAssertEqual(diff_a.updates.count, 3)
-//
-//        let diff_b = ormap_2.delta(ormap_1.state)
-//        // diff_b is the delta from map 2
-//        XCTAssertNotNil(diff_b)
-//        XCTAssertEqual(diff_b.updates.count, 2)
-//
-//        // merge the diff from map 1 into map 2
-//
-//        do {
-//            let result = try ormap_2.mergeDelta(diff_a)
-//            XCTAssertNotNil(result)
-//            XCTAssertEqual(result.count, 3)
-//        } catch CRDTMergeError.conflictingHistory(_) {
-//            XCTFail("When merging map 1 into map 2, the value `c` has conflicting metadata (one is deleted, the other not) so it should throw an exception.")
-//        }
-//
-//        // merge the diff from map 2 into map 1
-//
-//        do {
-//            let result = try ormap_1.mergeDelta(diff_b)
-//            XCTAssertNotNil(result)
-//            XCTAssertEqual(result.count, 3)
-//        } catch CRDTMergeError.conflictingHistory(_) {
-//            XCTFail("When merging map 1 into map 2, the value `c` has conflicting metadata (one is deleted, the other not) so it should throw an exception.")
-//        }
-//    }
-
+    func testCorruptedDeltaMerge() async throws {
+        let delta = b.delta(a.state)
+        let corruptedDeltaValues = Array(delta.values.dropFirst(1))
+        let corruptedDelta = List.CausalTreeDelta(values: corruptedDeltaValues)
+        do {
+            let _ = try a.mergeDelta(corruptedDelta)
+            XCTFail("Allowed corrupted merge to go through")
+        } catch {
+            XCTAssertNotNil(error)
+            print(error)
+        }
+    }
+    
     func testMergeSameCausalUpdateMerge() async throws {
         var list1 = List<Int, Int>(actorId: 13, [1, 2, 3, 4, 5])
         var list2 = List<Int, Int>(actorId: 22)
@@ -314,6 +244,8 @@ final class ListTests: XCTestCase {
             XCTFail()
         }
         XCTAssertEqual(list2.values, list1.values)
+        list1.verifyListConsistency()
+        list2.verifyListConsistency()
     }
 
     func testMergeDifferentCausalUpdateMerge() async throws {
@@ -355,5 +287,7 @@ final class ListTests: XCTestCase {
             XCTFail()
         }
         XCTAssertEqual(list2.values, list1.values)
+        list1.verifyListConsistency()
+        list2.verifyListConsistency()
     }
 }
