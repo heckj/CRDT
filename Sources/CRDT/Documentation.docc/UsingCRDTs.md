@@ -32,7 +32,6 @@ The choice of type impacts how much memory is required as additional tracking in
 In ``ORSet``, ``ORMap``, and ``List`` the combination of the both the size of the `ActorID` and the size of the Lamport timestamp are used to track the history of each element.
 The causal tree implementation of ``List`` includes an additional metadata to track the parent id within the causal tree.  
 
-
 ### Memory Overhead
 
 The memory overhead is minimal for the simplest CRDTs: ``GCounter``, ``PNCounter``, and ``GSet``.
@@ -41,6 +40,20 @@ Additional memory is needed to track the history when you can add and remove val
 The memory needed to track the history when you can add, remove, and update unordered elements is slightly higher, and the total memory grows with the upper bound of the sum of all keys added and removed from these types.
 The most memory is required to track history when you can add, remove, and maintain an ordered set of values.
 The memory needed for `List` grows with the combination of all additions, removals, and edits to the array.
+
+If the size of a list element is fairly small, a CRDT can represent a significant expansion in the total memory needed to represent that list.
+This may not be a significant issue, but is definitely worth being aware of.
+As an example, the library tests include [a test that shows the expansion of rough memory needed to store a string](https://github.com/heckj/CRDT/blob/f0ee6b25937a8ac1202432eba856d98f76f1cdf6/Tests/CRDTTests/grokTests.swift#L111) as a CRDT list of characters, which you might do to represent a collaboratively edited description.
+The ``List`` CRDT type has the most memory overhead, but provides the most functionality in allowing items to be added, removed, updated, and their ordering preserved.
+This space of CRDTs also has the most ongoing research and experimentation to optimize it.
+
+Using a single character string as an `ActorID`, the expansion in space is roughly 21 times:
+
+```
+causalTree List size: 326
+base list size: 15
+expansion factor: 21.733333333333334
+```
 
 ### Seamless Replication Doesn't Imply Correctness 
 
