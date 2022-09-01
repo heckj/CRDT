@@ -7,7 +7,7 @@ import XCTest
 
 extension List {
     func verifyListConsistency() {
-        if let msg = Metadata.verifyCausalTreeConsistency(self.tombstones + self.activeValues) {
+        if let msg = Metadata.verifyCausalTreeConsistency(tombstones + activeValues) {
             XCTFail(msg)
         }
     }
@@ -23,7 +23,7 @@ final class ListTests: XCTestCase {
         b.append("!")
         b.remove(at: 5)
     }
-    
+
     func testBareInit() {
         let z = List<String, String>(actorId: "∂")
         XCTAssertEqual(z.values.count, 0)
@@ -43,7 +43,7 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(a.values, ["a"])
         XCTAssertEqual(a.tombstones.count, 0)
         a.verifyListConsistency()
-        
+
         XCTAssertEqual(b.count, 5)
         XCTAssertEqual(b.currentTimestamp.clock, 6)
         XCTAssertEqual(b.tombstones.count, 1)
@@ -202,7 +202,7 @@ final class ListTests: XCTestCase {
             print(error)
         }
     }
-    
+
     func testMergeSameCausalUpdateMerge() async throws {
         var list1 = List<Int, Int>(actorId: 13, [1, 2, 3, 4, 5])
         var list2 = List<Int, Int>(actorId: 22)
