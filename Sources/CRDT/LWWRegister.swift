@@ -49,7 +49,7 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
         }
     }
 
-    /// Creates a new last-write-wins register.
+    /// Creates a new last-write-wins register with the value you provide.
     /// - Parameters:
     ///   - value: The initial register value.
     ///   - actorID: The identity of the collaborator for this register..
