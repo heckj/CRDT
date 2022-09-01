@@ -25,7 +25,7 @@ For more, general, information on CRDTs, see the following sites and papers:
 - [CRDT.tech website](https://crdt.tech)
 - [Wikipedia's page on CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type)
 
-The implementations within this library were heavily based on algorithms described in 
+The implementations within this library were heavily based on algorithms described in
 [Conflict-free Replicated Data Types](https://arxiv.org/pdf/1805.06358.pdf) by Nuno Preguiça, Carlos Baquero, and Marc Shapiro (2018)
 
 ## Alternatives
@@ -52,10 +52,12 @@ Articles discussing tradeoffs, algorithm details, and performance, specifically 
 - [5000x faster CRDTs: An Adventure in Optimization](https://josephg.com/blog/crdts-go-brrr/)
 - [CRDTs: The Hard Parts](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html)
   - [CRDTs: The Hard Parts video](https://youtu.be/x7drE24geUw)
-  
+
 ## Benchmarks
 
 Running the library:
 
     swift run -c release crdt-benchmark library run Benchmarks/results.json --library Benchmarks/Library.json --cycles 5 --mode replace-all
     swift run -c release crdt-benchmark library render Benchmarks/results.json --library Benchmarks/Library.json --output Benchmarks
+
+[Current Benchmarks](./Benchmarks/Results.md)
