@@ -441,6 +441,30 @@ private extension Array {
 }
 
 #if DEBUG
+
+    extension List.CausalTreeDelta: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            let metaSize = values.reduce(into: 0) { partialResult, meta in
+                partialResult += meta.sizeInBytes()
+            }
+            return metaSize
+        }
+    }
+
+    extension List.CausalTreeState: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            let activesSize = maxActiveClockValueByActor.reduce(into: 0) { partialResult, meta in
+                partialResult += MemoryLayout<ActorID>.size(ofValue: meta.key)
+                partialResult += MemoryLayout<UInt64>.size
+            }
+            let tombstonesSize = maxTombstoneClockValueByActor.reduce(into: 0) { partialResult, meta in
+                partialResult += MemoryLayout<ActorID>.size(ofValue: meta.key)
+                partialResult += MemoryLayout<UInt64>.size
+            }
+            return activesSize + tombstonesSize
+        }
+    }
+
     extension List.Metadata: ApproxSizeable {
         public func sizeInBytes() -> Int {
             MemoryLayout<Bool>.size + id.sizeInBytes() + (anchor?.sizeInBytes() ?? 1) + MemoryLayout<T>.size(ofValue: value)
