@@ -189,8 +189,8 @@ extension ORMap: DeltaCRDT {
     /// If you don't provide a state from another map instance, the returned delta represents the full state.
     ///
     /// - Parameter state: The optional state of the remote map.
-    /// - Returns: The changes to be merged into the map instance that provided the state to converge its state with this instance.
-    public func delta(_ otherInstanceState: ORMapState?) -> ORMapDelta {
+    /// - Returns: The changes to be merged into the map instance that provided the state to converge its state with this instance, or `nil` if no changes are needed.
+    public func delta(_ otherInstanceState: ORMapState?) -> ORMapDelta? {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxClockValueByActor: [ActorID: UInt64] = otherInstanceState?.maxClockValueByActor else {
             return ORMapDelta(updates: metadataByDictKey)
@@ -211,7 +211,10 @@ extension ORMap: DeltaCRDT {
                 partialResult[keyMetaData.key] = keyMetaData.value
             }
         }
-        return ORMapDelta(updates: statesToReplicate)
+        if !statesToReplicate.isEmpty {
+            return ORMapDelta(updates: statesToReplicate)
+        }
+        return nil
     }
 
     /// Returns a new instance of a map with the delta you provide merged into the current map.

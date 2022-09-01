@@ -108,7 +108,10 @@ final class ORMapTests: XCTestCase {
     }
 
     func testDeltaState_nilDelta() async {
-        let a_nil_delta = a.delta(nil)
+        guard let a_nil_delta = a.delta(nil) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.updates.count, 1)
@@ -116,7 +119,10 @@ final class ORMapTests: XCTestCase {
     }
 
     func testDeltaState_delta() async {
-        let a_delta = a.delta(b.state)
+        guard let a_delta = a.delta(b.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertEqual(a_delta.updates.count, 1)
         XCTAssertEqual(a_delta.updates, a.metadataByDictKey)
     }
@@ -124,7 +130,10 @@ final class ORMapTests: XCTestCase {
     func testDeltaState_mergeDeltas() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values.sorted(), b.values.sorted())
         XCTAssertEqual(c.keys.sorted(), b.keys.sorted())
@@ -133,7 +142,10 @@ final class ORMapTests: XCTestCase {
     func testDeltaState_mergeDelta() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values.sorted(), b.values.sorted())
         XCTAssertEqual(c.keys.sorted(), b.keys.sorted())
@@ -143,12 +155,18 @@ final class ORMapTests: XCTestCase {
         let ormap_1 = ORMap(actorId: UInt(31), ["a": 1, "b": 2, "c": 3, "d": 4])
         let ormap_2 = ORMap(actorId: UInt(13), ["e": 5, "f": 6])
 
-        let diff_a = ormap_1.delta(ormap_2.state)
+        guard let diff_a = ormap_1.delta(ormap_2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // diff_a is the delta from map 1
         XCTAssertNotNil(diff_a)
         XCTAssertEqual(diff_a.updates.count, 4)
 
-        let diff_b = ormap_2.delta(ormap_1.state)
+        guard let diff_b = ormap_2.delta(ormap_1.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // diff_b is the delta from map 2
         XCTAssertNotNil(diff_b)
         XCTAssertEqual(diff_b.updates.count, 2)
@@ -181,23 +199,27 @@ final class ORMapTests: XCTestCase {
 
         let diff_a = ormap_1.delta(ormap_2.state)
         // diff_a is the delta from map 1
-        XCTAssertNotNil(diff_a)
-        XCTAssertEqual(diff_a.updates.count, 0)
+        XCTAssertNil(diff_a)
 
         let diff_b = ormap_2.delta(ormap_1.state)
         // diff_b is the delta from map 2
-        XCTAssertNotNil(diff_b)
-        XCTAssertEqual(diff_b.updates.count, 0)
+        XCTAssertNil(diff_b)
 
         // If we take the full replicate anywhere (ask for a delta
         // with a nil state) and then merge that, it'll throw the
         // exception related to corrupted/conflicting history.
 
-        let diff_full_a = ormap_1.delta(nil)
+        guard let diff_full_a = ormap_1.delta(nil) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertNotNil(diff_full_a)
         XCTAssertEqual(diff_full_a.updates.count, 2)
 
-        let diff_full_b = ormap_2.delta(nil)
+        guard let diff_full_b = ormap_2.delta(nil) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertNotNil(diff_full_b)
         XCTAssertEqual(diff_full_b.updates.count, 2)
 
@@ -243,12 +265,18 @@ final class ORMapTests: XCTestCase {
         // the metadata for the entry for `c` is going to be in conflict, both by
         // Lamport timestamps ('2' vs '3') and the metadata in question (deleted vs not)
 
-        let diff_a = ormap_1.delta(ormap_2.state)
+        guard let diff_a = ormap_1.delta(ormap_2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // diff_a is the delta from map 1
         XCTAssertNotNil(diff_a)
         XCTAssertEqual(diff_a.updates.count, 3)
 
-        let diff_b = ormap_2.delta(ormap_1.state)
+        guard let diff_b = ormap_2.delta(ormap_1.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // diff_b is the delta from map 2
         XCTAssertNotNil(diff_b)
         XCTAssertEqual(diff_b.updates.count, 2)
@@ -280,7 +308,10 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_1.count, 3)
         XCTAssertEqual(ormap_2.count, 0)
 
-        let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state)
+        guard let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // diff_a is the delta from map 1
         XCTAssertNotNil(replicatedDeltaFromInitial1)
         XCTAssertEqual(replicatedDeltaFromInitial1.updates.count, 3)
@@ -298,8 +329,14 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_2.count, 4)
 
         // check the delta's in both directions:
-        let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state)
-        let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state)
+        guard let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
+        guard let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
 
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)
@@ -324,7 +361,10 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_1.count, 3)
         XCTAssertEqual(ormap_2.count, 0)
 
-        let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state)
+        guard let replicatedDeltaFromInitial1 = ormap_1.delta(ormap_2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // diff_a is the delta from map 1
         XCTAssertNotNil(replicatedDeltaFromInitial1)
         XCTAssertEqual(replicatedDeltaFromInitial1.updates.count, 3)
@@ -342,8 +382,14 @@ final class ORMapTests: XCTestCase {
         XCTAssertEqual(ormap_2.count, 3)
 
         // check the delta's in both directions:
-        let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state)
-        let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state)
+        guard let replicatedDeltaFrom1 = ormap_1.delta(ormap_2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
+        guard let replicatedDeltaFrom2 = ormap_2.delta(ormap_1.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
 
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)

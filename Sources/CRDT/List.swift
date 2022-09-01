@@ -275,8 +275,8 @@ extension List: DeltaCRDT {
     /// If you don't provide a state from another list instance, the returned delta represents the full state.
     ///
     /// - Parameter state: The optional state of the remote list.
-    /// - Returns: The changes to be merged into the list to converge it with this instance.
-    public func delta(_ otherInstanceState: CausalTreeState?) -> CausalTreeDelta {
+    /// - Returns: The changes to be merged into the list to converge it with this instance, or `nil` if no changes are needed.
+    public func delta(_ otherInstanceState: CausalTreeState?) -> CausalTreeDelta? {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxActiveClocks: [ActorID: UInt64] = otherInstanceState?.maxActiveClockValueByActor,
               let maxTombstoneClocks: [ActorID: UInt64] = otherInstanceState?.maxTombstoneClockValueByActor
@@ -313,7 +313,10 @@ extension List: DeltaCRDT {
                     partialResult.append(metadata)
                 }
             }
-        return CausalTreeDelta(values: activeStatesToReplicate + tombStonesToReplicate)
+        if !tombStonesToReplicate.isEmpty || !activeStatesToReplicate.isEmpty {
+            return CausalTreeDelta(values: activeStatesToReplicate + tombStonesToReplicate)
+        }
+        return nil
     }
 
     /// Returns a new instance of a map with the delta you provide merged into the current map.
@@ -400,6 +403,11 @@ extension List: Codable where T: Codable, ActorID: Codable {}
 extension List.Metadata: Codable where T: Codable, ActorID: Codable {}
 extension List.CausalTreeDelta: Codable where T: Codable, ActorID: Codable {}
 extension List.CausalTreeState: Codable where T: Codable, ActorID: Codable {}
+
+extension List: Sendable where T: Sendable, ActorID: Sendable {}
+extension List.Metadata: Sendable where T: Sendable, ActorID: Sendable {}
+extension List.CausalTreeState: Sendable where T: Sendable, ActorID: Sendable {}
+extension List.CausalTreeDelta: Sendable where T: Sendable, ActorID: Sendable {}
 
 extension List: Equatable where T: Equatable {}
 extension List.Metadata: Equatable where T: Equatable {}

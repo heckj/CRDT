@@ -14,7 +14,7 @@ import Foundation
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct LWWRegister<ActorID: Hashable & Comparable, T> {
     /// A struct that represents the state of an LWWRegister
-    public struct Atom {
+    public struct Metadata {
         internal var value: T
         internal var clockId: WallclockTimestamp<ActorID>
 
@@ -36,7 +36,7 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
         }
     }
 
-    private var _storage: Atom
+    private var _storage: Metadata
     internal let selfId: ActorID
 
     /// The value of the register.
@@ -45,7 +45,7 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
             _storage.value
         }
         set {
-            _storage = Atom(value: newValue, id: selfId)
+            _storage = Metadata(value: newValue, id: selfId)
         }
     }
 
@@ -57,9 +57,9 @@ public struct LWWRegister<ActorID: Hashable & Comparable, T> {
     public init(_ value: T, actorID: ActorID, timestamp: TimeInterval? = nil) {
         selfId = actorID
         if let timestamp = timestamp {
-            _storage = Atom(value: value, id: selfId, timestamp: timestamp)
+            _storage = Metadata(value: value, id: selfId, timestamp: timestamp)
         } else {
-            _storage = Atom(value: value, id: selfId)
+            _storage = Metadata(value: value, id: selfId)
         }
     }
 }
@@ -84,22 +84,32 @@ extension LWWRegister: DeltaCRDT {
 //    public typealias DeltaState = Self.Atom
 //    public typealias Delta = Self.Atom
 
+    public struct DeltaState {
+        public let clockId: WallclockTimestamp<ActorID>
+    }
+
     /// The current state of the CRDT.
-    public var state: Atom {
-        _storage
+    public var state: DeltaState {
+        DeltaState(clockId: _storage.clockId)
     }
 
     /// Computes and returns a diff from the current state of the counter to be used to update another instance.
     ///
     /// - Parameter state: The optional state of the remote CRDT.
-    /// - Returns: The changes to be merged into the counter instance that provided the state to converge its state with this instance.
-    public func delta(_: Atom?) -> Atom {
-        _storage
+    /// - Returns: The changes to be merged into the counter instance that provided the state to converge its state with this instance, or `nil` if no changes are needed.
+    public func delta(_ state: DeltaState?) -> Metadata? {
+        guard let state = state else {
+            return _storage
+        }
+        if state.clockId != _storage.clockId {
+            return _storage
+        }
+        return nil
     }
 
     /// Returns a new instance of a register with the delta you provide merged into the current register.
     /// - Parameter delta: The incremental, partial state to merge.
-    public func mergeDelta(_ delta: Atom) -> Self {
+    public func mergeDelta(_ delta: Metadata) -> Self {
         var newLWW = self
         newLWW._storage = _storage <= delta ? delta : _storage
         return newLWW
@@ -107,7 +117,7 @@ extension LWWRegister: DeltaCRDT {
 
     /// Merges another register into the current instance.
     /// - Parameter other: The regsister to merge.
-    public mutating func mergingDelta(_ delta: Atom) throws {
+    public mutating func mergingDelta(_ delta: Metadata) throws {
         if _storage <= delta {
             _storage = delta
         }
@@ -115,16 +125,20 @@ extension LWWRegister: DeltaCRDT {
 }
 
 extension LWWRegister: Codable where T: Codable, ActorID: Codable {}
-extension LWWRegister.Atom: Codable where T: Codable, ActorID: Codable {}
+extension LWWRegister.Metadata: Codable where T: Codable, ActorID: Codable {}
+extension LWWRegister.DeltaState: Codable where ActorID: Codable {}
 
 extension LWWRegister: Sendable where T: Sendable, ActorID: Sendable {}
-extension LWWRegister.Atom: Sendable where T: Sendable, ActorID: Sendable {}
+extension LWWRegister.Metadata: Sendable where T: Sendable, ActorID: Sendable {}
+extension LWWRegister.DeltaState: Sendable where ActorID: Sendable {}
 
 extension LWWRegister: Equatable where T: Equatable {}
-extension LWWRegister.Atom: Equatable where T: Equatable {}
+extension LWWRegister.Metadata: Equatable where T: Equatable {}
+extension LWWRegister.DeltaState: Equatable where ActorID: Equatable {}
 
 extension LWWRegister: Hashable where T: Hashable {}
-extension LWWRegister.Atom: Hashable where T: Hashable {}
+extension LWWRegister.Metadata: Hashable where T: Hashable {}
+extension LWWRegister.DeltaState: Hashable where ActorID: Hashable {}
 
 #if DEBUG
     extension LWWRegister: ApproxSizeable {
@@ -133,9 +147,15 @@ extension LWWRegister.Atom: Hashable where T: Hashable {}
         }
     }
 
-    extension LWWRegister.Atom: ApproxSizeable {
+    extension LWWRegister.Metadata: ApproxSizeable {
         public func sizeInBytes() -> Int {
             clockId.sizeInBytes() + MemoryLayout<T>.size(ofValue: value)
+        }
+    }
+
+    extension LWWRegister.DeltaState: ApproxSizeable {
+        public func sizeInBytes() -> Int {
+            clockId.sizeInBytes()
         }
     }
 #endif

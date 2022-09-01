@@ -152,19 +152,25 @@ final class ListTests: XCTestCase {
         let a_nil_delta = a.delta(nil)
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
-        XCTAssertEqual(a_nil_delta.values.count, 1)
-        XCTAssertEqual(a_nil_delta.values, a.activeValues)
+        XCTAssertEqual(a_nil_delta!.values.count, 1)
+        XCTAssertEqual(a_nil_delta!.values, a.activeValues)
     }
 
     func testDeltaState_deltaFromA() async {
-        let a_delta = a.delta(b.state)
+        guard let a_delta = a.delta(b.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertEqual(a_delta.values.count, 1)
         XCTAssertEqual(a_delta.values.filter(\.isDeleted).map(\.value), [])
         XCTAssertEqual(a_delta.values.filter { !$0.isDeleted }.map(\.value), ["a"])
     }
 
     func testDeltaState_deltaFromB() async {
-        let b_delta = b.delta(a.state)
+        guard let b_delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertEqual(b_delta.values.count, 6)
         XCTAssertEqual(b_delta.values.filter(\.isDeleted).map(\.value), ["!"])
         XCTAssertEqual(b_delta.values.filter { !$0.isDeleted }.map(\.value), ["h", "e", "l", "l", "o"])
@@ -173,7 +179,10 @@ final class ListTests: XCTestCase {
     func testDeltaState_mergeDeltasFromB() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values, ["h", "e", "l", "l", "o", "a"])
         XCTAssertEqual(c.tombstones.count, 1)
@@ -183,7 +192,10 @@ final class ListTests: XCTestCase {
     func testDeltaState_mergeDeltaFromA() async throws {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         let c = try a.mergeDelta(delta)
         XCTAssertEqual(c.values, ["h", "e", "l", "l", "o", "a"])
         XCTAssertEqual(c.tombstones.count, 1)
@@ -191,7 +203,10 @@ final class ListTests: XCTestCase {
     }
 
     func testCorruptedDeltaMerge() async throws {
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         let corruptedDeltaValues = Array(delta.values.dropFirst(1))
         let corruptedDelta = List.CausalTreeDelta(values: corruptedDeltaValues)
         do {
@@ -210,7 +225,11 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(list1.count, 5)
         XCTAssertEqual(list2.count, 0)
 
-        let replicatedDeltaFromInitial1 = list1.delta(list2.state)
+        guard let replicatedDeltaFromInitial1 = list1.delta(list2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
+
         // diff_a is the delta from map 1
         XCTAssertNotNil(replicatedDeltaFromInitial1)
         XCTAssertEqual(replicatedDeltaFromInitial1.values.count, 5)
@@ -227,8 +246,14 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(list2.count, 6)
 
         // check the delta's in both directions:
-        let replicatedDeltaFrom1 = list1.delta(list2.state)
-        let replicatedDeltaFrom2 = list2.delta(list1.state)
+        guard let replicatedDeltaFrom1 = list1.delta(list2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
+        guard let replicatedDeltaFrom2 = list2.delta(list1.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
 
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)
@@ -254,7 +279,10 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(list1.count, 5)
         XCTAssertEqual(list2.count, 0)
 
-        let replicatedDeltaFromInitial1 = list1.delta(list2.state)
+        guard let replicatedDeltaFromInitial1 = list1.delta(list2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // diff_a is the delta from map 1
         XCTAssertNotNil(replicatedDeltaFromInitial1)
         XCTAssertEqual(replicatedDeltaFromInitial1.values.count, 5)
@@ -270,8 +298,14 @@ final class ListTests: XCTestCase {
         XCTAssertEqual(list2.count, 4)
 
         // check the delta's in both directions:
-        let replicatedDeltaFrom1 = list1.delta(list2.state)
-        let replicatedDeltaFrom2 = list2.delta(list1.state)
+        guard let replicatedDeltaFrom1 = list1.delta(list2.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
+        guard let replicatedDeltaFrom2 = list2.delta(list1.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
 
         XCTAssertNotNil(replicatedDeltaFrom1)
         XCTAssertNotNil(replicatedDeltaFrom2)

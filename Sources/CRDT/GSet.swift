@@ -94,17 +94,19 @@ extension GSet: DeltaCRDT {
     /// Computes and returns a diff from the current state of the counter to be used to update another instance.
     ///
     /// - Parameter state: The optional state of the remote CRDT.
-    /// - Returns: The changes to be merged into the counter instance that provided the state to converge its state with this instance.
-    public func delta(_ state: GSetState?) -> GSetDelta {
-        if let otherState = state {
-            var diff = _storage
-            for val in _storage.intersection(otherState.values) {
-                diff.remove(val)
-            }
-            return GSetDelta(lamportClock: currentTimestamp, values: diff)
-        } else {
+    /// - Returns: The changes to be merged into the counter instance that provided the state to converge its state with this instance, or `nil` if no changes are needed.
+    public func delta(_ state: GSetState?) -> GSetDelta? {
+        guard let otherState = state else {
             return GSetDelta(lamportClock: currentTimestamp, values: _storage)
         }
+        var diff = _storage
+        for val in _storage.intersection(otherState.values) {
+            diff.remove(val)
+        }
+        if !diff.isEmpty {
+            return GSetDelta(lamportClock: currentTimestamp, values: diff)
+        }
+        return nil
     }
 
     /// Returns a new instance of an set with the delta you provide merged into the current set.

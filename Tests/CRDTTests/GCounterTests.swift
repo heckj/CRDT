@@ -91,7 +91,7 @@ final class GCounterTests: XCTestCase {
     func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let c = a.mergeDelta(b.delta(a.state))
+        let c = a.mergeDelta(b.delta(a.state)!)
         XCTAssertEqual(c.value, b.value)
     }
 }

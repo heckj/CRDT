@@ -193,11 +193,12 @@ benchmark.add(
         let setB = ORSet<String, Int>(actorId: "B", input2.values)
 
         timer.measure {
-            let diff = setA.delta(setB.state)
-            do {
-                let x = try setB.mergeDelta(diff)
-                blackHole(x)
-            } catch {}
+            if let diff = setA.delta(setB.state) {
+                do {
+                    let x = try setB.mergeDelta(diff)
+                    blackHole(x)
+                } catch {}
+            }
         }
         blackHole(setA)
         blackHole(setB)

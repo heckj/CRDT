@@ -92,8 +92,8 @@ final class grokTests: XCTestCase {
             print("GSet2(2 elements, UInt actorId) = \(gset_2.sizeInBytes())")
             print("GSet1's state size: \(gset_1.state.sizeInBytes())")
             print("GSet2's state size: \(gset_2.state.sizeInBytes())")
-            print("Delta size of Set1 merging into Set2: \(gset_2.delta(gset_1.state).sizeInBytes())")
-            print("Delta size of Set2 merging into Set1: \(gset_1.delta(gset_2.state).sizeInBytes())")
+            print("Delta size of Set1 merging into Set2: \(gset_2.delta(gset_1.state)!.sizeInBytes())")
+            print("Delta size of Set2 merging into Set1: \(gset_1.delta(gset_2.state)!.sizeInBytes())")
         }
 
         func testORSetSizing() async throws {
@@ -104,8 +104,8 @@ final class grokTests: XCTestCase {
             print("ORSet2(2 elements, UInt actorId) = \(orset_2.sizeInBytes())")
             print("ORSet1's state size: \(orset_1.state.sizeInBytes())")
             print("ORSet2's state size: \(orset_2.state.sizeInBytes())")
-            print("Delta size of Set1 merging into Set2: \(orset_2.delta(orset_1.state).sizeInBytes())")
-            print("Delta size of Set2 merging into Set1: \(orset_1.delta(orset_2.state).sizeInBytes())")
+            print("Delta size of Set1 merging into Set2: \(orset_2.delta(orset_1.state)!.sizeInBytes())")
+            print("Delta size of Set2 merging into Set1: \(orset_1.delta(orset_2.state)!.sizeInBytes())")
         }
 
         func testListSizing() async throws {

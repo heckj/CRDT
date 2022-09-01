@@ -18,11 +18,11 @@
 ### Delta-based Replicating
 
 - ``CRDT/LWWRegister/state``
+- ``CRDT/LWWRegister/DeltaState``
 - ``CRDT/LWWRegister/delta(_:)``
-- ``CRDT/LWWRegister/Atom``
+- ``CRDT/LWWRegister/Metadata``
 - ``CRDT/LWWRegister/mergeDelta(_:)``
 - ``CRDT/LWWRegister/mergingDelta(_:)``
-
 
 ### Decoding a Register
 

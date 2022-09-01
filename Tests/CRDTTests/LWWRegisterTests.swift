@@ -65,30 +65,37 @@ final class LWWRegisterTests: XCTestCase {
     }
 
     func testDeltaState_state() async {
-        let atom = a.state
-        XCTAssertNotNil(atom)
-        XCTAssertEqual(atom.value, a.value)
-        XCTAssertEqual(atom.clockId.actorId, a.selfId)
+        let state = a.state
+        XCTAssertNotNil(state)
+        XCTAssertEqual(state.clockId.actorId, a.selfId)
     }
 
     func testDeltaState_delta() async {
-        let a_nil_delta = a.delta(nil)
+        guard let a_nil_delta = a.delta(nil) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.value, 1)
         let a_state = a.state
-        XCTAssertEqual(a_nil_delta, a_state)
+        XCTAssertEqual(a_state.clockId.actorId, a.selfId)
 
-        let a_delta = a.delta(b.state)
+        guard let a_delta = a.delta(b.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertNotNil(a_delta)
         XCTAssertEqual(a_delta.value, 1)
-        XCTAssertEqual(a_delta, a_state)
     }
 
     func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertNotNil(delta)
         let c = a.mergeDelta(delta)
         XCTAssertEqual(c.value, b.value)

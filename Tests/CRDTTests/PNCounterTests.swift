@@ -94,13 +94,19 @@ final class PNCounterTests: XCTestCase {
     }
 
     func testDeltaState_delta() async {
-        let a_nil_delta = a.delta(nil)
+        guard let a_nil_delta = a.delta(nil) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.pos, 1)
         XCTAssertEqual(a_nil_delta.neg, 0)
 
-        let a_delta = a.delta(b.state)
+        guard let a_delta = a.delta(b.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         XCTAssertNotNil(a_delta)
         XCTAssertEqual(a_delta.pos, 1)
         XCTAssertEqual(a_delta.neg, 0)
@@ -109,7 +115,7 @@ final class PNCounterTests: XCTestCase {
     func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let c = a.mergeDelta(b.delta(a.state))
+        let c = a.mergeDelta(b.delta(a.state)!)
         XCTAssertEqual(c.value, b.value)
     }
 }

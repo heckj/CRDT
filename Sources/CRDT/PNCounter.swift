@@ -91,7 +91,7 @@ extension PNCounter: DeltaCRDT {
     ///
     /// - Parameter state: The optional state of the remote CRDT.
     /// - Returns: The changes to be merged into the counter instance that provided the state to converge its state with this instance.
-    public func delta(_: PNCounterState?) -> PNCounterState {
+    public func delta(_: PNCounterState?) -> PNCounterState? {
         PNCounterState(pos: pos_value, neg: neg_value)
     }
 

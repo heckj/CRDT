@@ -71,20 +71,25 @@ final class GSetTests: XCTestCase {
     }
 
     func testDeltaState_delta() async {
-        let a_nil_delta = a.delta(nil)
+        guard let a_nil_delta = a.delta(nil) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         // print(a_nil_delta)
         XCTAssertNotNil(a_nil_delta)
         XCTAssertEqual(a_nil_delta.values, [])
 
         let a_delta = a.delta(b.state)
-        XCTAssertNotNil(a_delta)
-        XCTAssertEqual(a_delta.values, [])
+        XCTAssertNil(a_delta)
     }
 
     func testDeltaState_mergeDeltas() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         let c = a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
@@ -92,7 +97,10 @@ final class GSetTests: XCTestCase {
     func testDeltaState_mergeDelta() async {
         // equiv direct merge
         // let c = a.merged(with: b)
-        let delta = b.delta(a.state)
+        guard let delta = b.delta(a.state) else {
+            XCTFail("incorrectly returned no differences to replicate")
+            return
+        }
         let c = a.mergeDelta(delta)
         XCTAssertEqual(c.values, b.values)
     }
