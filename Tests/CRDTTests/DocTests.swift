@@ -8,6 +8,7 @@ import XCTest
 
 // These tests are placeholders in order to verify code examples in the documentation work as expected.
 
+// used in ReplicatingCRDTs.md
 extension UUID: Comparable {
     public static func < (lhs: UUID, rhs: UUID) -> Bool {
         lhs.uuidString < rhs.uuidString
@@ -16,18 +17,21 @@ extension UUID: Comparable {
 
 final class DocTests: XCTestCase {
     func testReplicatingCRDTs_1() throws {
+        // used in ReplicatingCRDTs.md
         let register = LWWRegister("Hello", actorID: UUID().uuidString)
 
         XCTAssertNotNil(register)
     }
 
     func testReplicatingCRDTs_2() throws {
+        // used in ReplicatingCRDTs.md
         let register = LWWRegister("Hello", actorID: UUID())
 
         XCTAssertNotNil(register)
     }
 
     func testReplicatingCRDTs_3() throws {
+        // used in ReplicatingCRDTs.md
         let register = LWWRegister("Hello", actorID: UUID())
 
         let data = try JSONEncoder().encode(register)
@@ -47,6 +51,7 @@ final class DocTests: XCTestCase {
     }
 
     func testReplicatingCRDTs_4() throws {
+        // used in ReplicatingCRDTs.md
         let register = LWWRegister("Hello", actorID: UUID())
 
         let data = try JSONEncoder().encode(register.state)
