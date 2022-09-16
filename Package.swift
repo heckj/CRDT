@@ -39,3 +39,5 @@ let package = Package(
         ),
     ]
 )
+// use: swift build -Xswiftc -Xfrontend -Xswiftc -warn-concurrency
+// to run with strict concurrency checking
