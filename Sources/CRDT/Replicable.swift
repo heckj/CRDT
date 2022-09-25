@@ -2,6 +2,8 @@
 //  Replicable.swift
 //
 
+import Foundation
+
 /// A type that can be merged with itself, providing a deterministic result.
 ///
 /// Replicable is the core feature of a Conflict-free Replicated Data Type (CRDT).
@@ -27,4 +29,17 @@ public protocol Replicable {
 /// 3. Transitivity: `a<=b` and `b<=c` implies `a<=c`.
 public protocol PartiallyOrderable {
     static func <= (lhs: Self, rhs: Self) -> Bool
+}
+
+extension UInt: PartiallyOrderable {}
+extension UInt8: PartiallyOrderable {}
+extension UInt16: PartiallyOrderable {}
+extension UInt32: PartiallyOrderable {}
+extension UInt64: PartiallyOrderable {}
+extension String: PartiallyOrderable {}
+extension Int: PartiallyOrderable {}
+extension UUID: PartiallyOrderable {
+    public static func <= (lhs: UUID, rhs: UUID) -> Bool {
+        lhs.uuidString <= rhs.uuidString
+    }
 }
