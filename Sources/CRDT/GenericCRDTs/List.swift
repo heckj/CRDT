@@ -12,7 +12,7 @@
 /// The `List` implementation is based a causal tree implementation, stored within array structures,
 /// as described in [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Equatable> {
+public struct List<ActorID: Hashable & PartiallyOrderable, T: Hashable & Comparable & Equatable> {
     /// Causal Tree Metadata
     public struct Metadata: CustomStringConvertible, Identifiable {
         /// A unique identifier, made up of a Lamport timestamp and the collaboration instance Id.
@@ -51,7 +51,10 @@ public struct List<ActorID: Hashable & Comparable, T: Hashable & Comparable & Eq
         func ordered(beforeSibling other: Metadata) -> Bool {
             // A tuple sort orders by the first tuple, then the second tuple
             // IFF the first tuples are equivalent.
-            (id.clock, id.actorId) > (other.id.clock, other.id.actorId)
+            if id.clock == other.id.clock {
+                return other.id.actorId <= id.actorId
+            }
+            return id.clock > other.id.clock
         }
 
         /// Returns a list of metadata ordered according to a preorder traversal of a causal tree.

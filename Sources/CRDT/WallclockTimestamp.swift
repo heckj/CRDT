@@ -9,7 +9,7 @@ import Foundation
 /// The comparable value of the actor identity is used to deterministically order of wallclock timestamps in the (unlikely, but possible) scenario
 /// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
 /// "at the same time".
-public struct WallclockTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
+public struct WallclockTimestamp<ActorID: Hashable & PartiallyOrderable>: Identifiable, PartiallyOrderable {
     internal var clock: TimeInterval
     internal var actorId: ActorID
 
@@ -18,15 +18,29 @@ public struct WallclockTimestamp<ActorID: Hashable & Comparable>: Identifiable, 
         description
     }
 
-    /// Returns a Boolean value indicating whether the value of the first timestamp is less than that of the second timestamp.
+    /// Returns a Boolean value indicating whether the value of the first timestamp is greater than that of the second timestamp.
     ///
     /// Timestamps are first compared by an internal `clock` value, and uses the provided actor to deterministically order values when the clocks are identical.
     /// This assures that timestamps are partially order-able to satisfy  conformance to ``CRDT/PartiallyOrderable``.
     /// - Parameters:
     ///   - lhs: The first timestamp.
     ///   - rhs: The second timestamp.
-    public static func < (lhs: WallclockTimestamp, rhs: WallclockTimestamp) -> Bool {
-        (lhs.clock, lhs.id) < (rhs.clock, rhs.id)
+    public static func > (lhs: WallclockTimestamp, rhs: WallclockTimestamp) -> Bool {
+        !(lhs <= rhs)
+    }
+
+    /// Returns a Boolean value indicating whether the value of the first timestamp is less than or equal to that of the second timestamp.
+    ///
+    /// Timestamps are first compared by an internal `clock` value, and uses the provided actor to deterministically order values when the clocks are identical.
+    /// This assures that timestamps are partially order-able to satisfy  conformance to ``CRDT/PartiallyOrderable``.
+    /// - Parameters:
+    ///   - lhs: The first timestamp.
+    ///   - rhs: The second timestamp.
+    public static func <= (lhs: WallclockTimestamp<ActorID>, rhs: WallclockTimestamp<ActorID>) -> Bool {
+        if lhs.clock == rhs.clock {
+            return rhs.id <= lhs.id
+        }
+        return lhs.clock <= rhs.clock
     }
 
     /// Create a new Lamport timestamp with the actor identity you provide.
@@ -46,8 +60,6 @@ extension WallclockTimestamp: Sendable where ActorID: Sendable {}
 extension WallclockTimestamp: Equatable {}
 
 extension WallclockTimestamp: Hashable {}
-
-extension WallclockTimestamp: PartiallyOrderable {}
 
 extension WallclockTimestamp: CustomStringConvertible {
     /// The description of the timestamp.

@@ -7,7 +7,7 @@
 /// The comparable value of the actor identity is used to deterministically order of Lamport timestamps in the scenario
 /// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
 /// "at the same time".
-public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Comparable {
+public struct LamportTimestamp<ActorID: Hashable & PartiallyOrderable>: Identifiable, PartiallyOrderable {
     internal var clock: UInt64 = 0
     internal var actorId: ActorID
 
@@ -21,15 +21,26 @@ public struct LamportTimestamp<ActorID: Hashable & Comparable>: Identifiable, Co
         clock += 1
     }
 
-    /// Returns a Boolean value indicating whether the value of the first timestamp is less than that of the second timestamp.
+    /// Returns a Boolean value indicating whether the value of the first timestamp is less than or equal to that of the second timestamp.
     ///
     /// Timestamps are first compared by an internal `clock` value, and uses the provided actor to deterministically order values when the clocks are identical.
     /// This assures that timestamps are partially order-able to satisfy  conformance to ``CRDT/PartiallyOrderable``.
     /// - Parameters:
     ///   - lhs: The first timestamp.
     ///   - rhs: The second timestamp.
-    public static func < (lhs: LamportTimestamp, rhs: LamportTimestamp) -> Bool {
-        (lhs.clock, lhs.id) < (rhs.clock, rhs.id)
+    public static func <= (lhs: LamportTimestamp, rhs: LamportTimestamp) -> Bool {
+        (lhs.clock, lhs.id) <= (rhs.clock, rhs.id)
+    }
+
+    /// Returns a Boolean value indicating whether the value of the first timestamp is greater than that of the second timestamp.
+    ///
+    /// Timestamps are first compared by an internal `clock` value, and uses the provided actor to deterministically order values when the clocks are identical.
+    /// This assures that timestamps are partially order-able to satisfy  conformance to ``CRDT/PartiallyOrderable``.
+    /// - Parameters:
+    ///   - lhs: The first timestamp.
+    ///   - rhs: The second timestamp.
+    public static func > (lhs: LamportTimestamp, rhs: LamportTimestamp) -> Bool {
+        !(lhs <= rhs)
     }
 
     /// Create a new Lamport timestamp with the actor identity you provide.
@@ -49,8 +60,6 @@ extension LamportTimestamp: Sendable where ActorID: Sendable {}
 extension LamportTimestamp: Equatable {}
 
 extension LamportTimestamp: Hashable {}
-
-extension LamportTimestamp: PartiallyOrderable {}
 
 extension LamportTimestamp: CustomStringConvertible {
     /// The description of the timestamp.

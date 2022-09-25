@@ -1,38 +1,39 @@
 //
-//  ORSet.swift
+//  ORMap.swift
 //
 
-/// An Observed-Remove Set.
+/// An Observed-Remove Map.
 ///
-/// The `ORSet` can add and remove items from the set, compared to a ``GSet``, which can only add.
-/// This is more powerful than the `GSet`, but has extra storage costs.
+/// The `ORMap` adds,  removes, and updates items from a dictionary-like structure.
 ///
 /// The implementation is based on "An Optimized Conflict-free Replicated Set" by
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
-/// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368)
-public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
+/// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368).
+public struct ORMap<ActorID: Hashable & PartiallyOrderable, KEY: Hashable, VALUE: Equatable> {
     internal struct Metadata: CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
+        var value: VALUE
         var description: String {
-            "[\(lamportTimestamp), deleted: \(isDeleted)]"
+            "[\(lamportTimestamp), deleted: \(isDeleted), value: \(value)]"
         }
 
-        init(lamportTimestamp: LamportTimestamp<ActorID>) {
-            isDeleted = false
+        init(lamportTimestamp: LamportTimestamp<ActorID>, isDeleted: Bool = false, _ val: VALUE) {
             self.lamportTimestamp = lamportTimestamp
+            self.isDeleted = isDeleted
+            value = val
         }
     }
 
     internal var currentTimestamp: LamportTimestamp<ActorID>
-    internal var metadataByValue: [T: Metadata]
+    internal var metadataByDictKey: [KEY: Metadata]
 
     /// Creates a new grow-only set..
     /// - Parameters:
     ///   - actorID: The identity of the collaborator for this set.
     ///   - clock: An optional Lamport clock timestamp for this set.
     public init(actorId: ActorID, clock: UInt64 = 0) {
-        metadataByValue = .init()
+        metadataByDictKey = .init()
         currentTimestamp = .init(clock: clock, actorId: actorId)
     }
 
@@ -41,79 +42,62 @@ public struct ORSet<ActorID: Hashable & Comparable, T: Hashable> {
     ///   - actorID: The identity of the collaborator for this set.
     ///   - clock: An optional Lamport clock timestamp for this set.
     ///   - elements: An list of elements to add to the set.
-    public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
+    public init(actorId: ActorID, clock: UInt64 = 0, _ kvPairs: [KEY: VALUE]) {
         self = .init(actorId: actorId, clock: clock)
-        elements.forEach { self.insert($0) }
+        for x in kvPairs {
+            self[x.key] = x.value
+        }
+    }
+
+    /// The set of keys.
+    public var keys: [KEY] {
+        metadataByDictKey.filter { !$1.isDeleted }.map(\.key)
     }
 
     /// The set of values.
-    public var values: Set<T> {
-        let values = metadataByValue.filter { !$1.isDeleted }.map(\.key)
-        return Set(values)
-    }
-
-    /// Returns a Boolean value that indicates whether the set contains the value you provide.
-    /// - Parameter value: The value to compare.
-    public func contains(_ value: T) -> Bool {
-        !(metadataByValue[value]?.isDeleted ?? true)
+    public var values: [VALUE] {
+        metadataByDictKey.filter { !$1.isDeleted }.map(\.value.value)
     }
 
     /// The number of items in the set.
     public var count: Int {
-        metadataByValue.filter { !$1.isDeleted }.count
+        metadataByDictKey.filter { !$1.isDeleted }.count
     }
 
-    /// Inserts a new value into the set.
-    /// - Parameter value: The value to insert.
-    /// - Returns: A Boolean value indicating whether the value inserted was new to the set.
-    @discardableResult public mutating func insert(_ value: T) -> Bool {
-        currentTimestamp.tick()
-
-        let metadata = Metadata(lamportTimestamp: currentTimestamp)
-        let isNewInsert: Bool
-
-        if let oldMetadata = metadataByValue[value] {
-            isNewInsert = oldMetadata.isDeleted
-        } else {
-            isNewInsert = true
-        }
-        metadataByValue[value] = metadata
-
-        return isNewInsert
-    }
-
-    /// Removes a value from the set.
-    /// - Parameter value: The value to remove.
-    /// - Returns: The value removed from the set, or `nil` if the value didn't exist.
-    @discardableResult public mutating func remove(_ value: T) -> T? {
-        let returnValue: T?
-
-        if let oldMetadata = metadataByValue[value], !oldMetadata.isDeleted {
-            currentTimestamp.tick()
-            var metadata = Metadata(lamportTimestamp: currentTimestamp)
-            metadata.isDeleted = true
-            metadataByValue[value] = metadata
-            returnValue = value
-        } else {
-            returnValue = nil
+    public subscript(key: KEY) -> VALUE? {
+        get {
+            guard let container = metadataByDictKey[key], !container.isDeleted else { return nil }
+            return container.value
         }
 
-        return returnValue
+        set(newValue) {
+            if let newValue = newValue {
+                currentTimestamp.tick()
+                let metadata = Metadata(lamportTimestamp: currentTimestamp, newValue)
+                metadataByDictKey[key] = metadata
+            } else if let oldMetadata = metadataByDictKey[key] {
+                currentTimestamp.tick()
+                let updatedMetaData = Metadata(lamportTimestamp: currentTimestamp, isDeleted: true, oldMetadata.value)
+                metadataByDictKey[key] = updatedMetaData
+            }
+        }
     }
 }
 
-extension ORSet: Replicable {
-    /// Returns a new set by merging two set instances.
+extension ORMap: Replicable {
+    /// Returns a new counter by merging two map instances.
+    ///
+    /// This merge doesn't potentially throw errors, but in some causal edge cases, you might get unexpected metadata, which could result in unexpected values.
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
     /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
-    /// This provides a deterministic output, but could be surprising.
-    /// A set may have values that reflect being added or removed, depending on the underlying metadata.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
     ///
     /// - Parameter other: The counter to merge.
-    public func merged(with other: ORSet) -> ORSet {
+    public func merged(with other: ORMap) -> ORMap {
         var copy = self
-        copy.metadataByValue = other.metadataByValue.reduce(into: metadataByValue) { result, entry in
+        copy.metadataByDictKey = other.metadataByDictKey.reduce(into: metadataByDictKey) { result, entry in
             let firstMetadata = result[entry.key]
             let secondMetadata = entry.value
             if let firstMetadata = firstMetadata {
@@ -122,20 +106,21 @@ extension ORSet: Replicable {
                 result[entry.key] = secondMetadata
             }
         }
-        copy.currentTimestamp = max(currentTimestamp, other.currentTimestamp)
+        // would use max() here, but that requires conformance to Comparable
+        copy.currentTimestamp = currentTimestamp > other.currentTimestamp ? currentTimestamp : other.currentTimestamp
         return copy
     }
 
-    /// Merges the delta you provide from another set.
+    /// Merges the delta you provide from another map.
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
     /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
-    /// This provides a deterministic output, but could be surprising.
-    /// A set may have values that reflect being added or removed, depending on the underlying metadata.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
     ///
     /// - Parameter other: The counter to merge.
-    public mutating func merging(with other: ORSet) {
-        metadataByValue = other.metadataByValue.reduce(into: metadataByValue) { result, entry in
+    public mutating func merging(with other: ORMap) {
+        metadataByDictKey = other.metadataByDictKey.reduce(into: metadataByDictKey) { result, entry in
             let firstMetadata = result[entry.key]
             let secondMetadata = entry.value
             if let firstMetadata = firstMetadata {
@@ -144,13 +129,14 @@ extension ORSet: Replicable {
                 result[entry.key] = secondMetadata
             }
         }
-        currentTimestamp = max(currentTimestamp, other.currentTimestamp)
+        // would use max() here, but that requires conformance to Comparable
+        currentTimestamp = currentTimestamp > other.currentTimestamp ? currentTimestamp : other.currentTimestamp
     }
 }
 
-extension ORSet: DeltaCRDT {
+extension ORMap: DeltaCRDT {
     // NOTE(heckj): IMPLEMENTATION DETAILS
-    //  - You may note that this implementation is nearly identical to ORMap's conformance methods.
+    //  - You may note that this implementation is nearly identical to ORSet's conformance methods.
     //
     //     This is intentional!
     //
@@ -161,24 +147,24 @@ extension ORSet: DeltaCRDT {
     // just decided to replicate the whole kit.
     //
     // That said, if you find and fix a bug in these protocol conformance methods, PLEASE double check
-    // the peer implementation in `ORMap.swift` and fix any issues there as well.
+    // the peer implementation in `ORSet.swift` and fix any issues there as well.
 
-    /// The minimal state for an ORSet to compute diffs for replication.
-    public struct ORSetState {
+    /// The minimal state for a map to compute diffs for replication.
+    public struct ORMapState {
         let maxClockValueByActor: [ActorID: UInt64]
     }
 
-    /// The set of changes to bring another set instance up to the same state.
-    public struct ORSetDelta {
-        let updates: [T: Metadata]
+    /// The set of changes to bring another map instance up to the same state.
+    public struct ORMapDelta {
+        let updates: [KEY: Metadata]
     }
 
-    /// The current state of the set.
-    public var state: ORSetState {
+    /// The current state of the map.
+    public var state: ORMapState {
         // The composed, compressed state to compare consists of a list of all the collaborators (represented
         // by the actorId in the LamportTimestamps) with their highest value for clock.
         var maxClockValueByActor: [ActorID: UInt64]
-        maxClockValueByActor = metadataByValue.reduce(into: [:]) { partialResult, valueMetaData in
+        maxClockValueByActor = metadataByDictKey.reduce(into: [:]) { partialResult, valueMetaData in
             // Do the accumulated keys already reference an actorID from our CRDT?
             if partialResult.keys.contains(valueMetaData.value.lamportTimestamp.actorId) {
                 // Our local CRDT knows of this actorId, so only include the value if the
@@ -197,26 +183,26 @@ extension ORSet: DeltaCRDT {
                 partialResult[valueMetaData.value.lamportTimestamp.actorId] = valueMetaData.value.lamportTimestamp.clock
             }
         }
-        return ORSetState(maxClockValueByActor: maxClockValueByActor)
+        return ORMapState(maxClockValueByActor: maxClockValueByActor)
     }
 
-    /// Computes and returns a diff from the current state of the set to be used to update another instance.
+    /// Computes and returns a diff from the current state of the map to be used to update another instance.
     ///
-    /// If you don't provide a state from another set instance, the returned delta represents the full state.
+    /// If you don't provide a state from another map instance, the returned delta represents the full state.
     ///
-    /// - Parameter state: The optional state of the remote set.
-    /// - Returns: The changes to be merged into the set instance that provided the state to converge its state with this instance, or `nil` if no changes are needed.
-    public func delta(_ otherInstanceState: ORSetState?) -> ORSetDelta? {
+    /// - Parameter state: The optional state of the remote map.
+    /// - Returns: The changes to be merged into the map instance that provided the state to converge its state with this instance, or `nil` if no changes are needed.
+    public func delta(_ otherInstanceState: ORMapState?) -> ORMapDelta? {
         // In the case of a null state being provided, the delta is all current values and their metadata:
         guard let maxClockValueByActor: [ActorID: UInt64] = otherInstanceState?.maxClockValueByActor else {
-            return ORSetDelta(updates: metadataByValue)
+            return ORMapDelta(updates: metadataByDictKey)
         }
         // The state of a remote instance has been provided to us as a list of actorIds and max clock values.
-        var statesToReplicate: [T: Metadata]
+        var statesToReplicate: [KEY: Metadata]
 
         // To determine the changes that need to be replicated to the instance that provided the state:
         // Iterate through the local collection:
-        statesToReplicate = metadataByValue.reduce(into: [:]) { partialResult, keyMetaData in
+        statesToReplicate = metadataByDictKey.reduce(into: [:]) { partialResult, keyMetaData in
             // - If there are actorIds in our CRDT that the incoming state doesn't list, include those values
             // in the delta. It means the remote CRDT hasn't seen the collaborator that the actorId represents.
             if !maxClockValueByActor.keys.contains(keyMetaData.value.lamportTimestamp.actorId) {
@@ -228,33 +214,33 @@ extension ORSet: DeltaCRDT {
             }
         }
         if !statesToReplicate.isEmpty {
-            return ORSetDelta(updates: statesToReplicate)
+            return ORMapDelta(updates: statesToReplicate)
         }
         return nil
     }
 
-    /// Returns a new instance of a set with the delta you provide merged into the current set.
+    /// Returns a new instance of a map with the delta you provide merged into the current map.
     /// - Parameter delta: The incremental, partial state to merge.
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
     /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
-    /// This provides a deterministic output, but could be surprising.
-    /// A set may have values that reflect being added or removed, depending on the underlying metadata.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
     ///
     /// This method will throw an exception in the scenario where two identical Lamport timestamps (same clock, same actorId)
     /// report conflicting metadata.
-    public func mergeDelta(_ delta: ORSetDelta) throws -> Self {
+    public func mergeDelta(_ delta: ORMapDelta) throws -> Self {
         var copy = self
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
-            if let localMetadata = copy.metadataByValue[valueKey] {
+            if let localMetadata = copy.metadataByDictKey[valueKey] {
                 // The importing delta *includes* a value that we already have - which generally
                 // should only happen when we merge two previously unsynchronized CRDTs.
                 if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
                     // The incoming delta includes a key we already have, but the Lamport timestamp clock value
                     // is newer than the version we're tracking, so we choose the metadata with a higher lamport
                     // timestamp.
-                    copy.metadataByValue[valueKey] = metadata
+                    copy.metadataByDictKey[valueKey] = metadata
                 } else if metadata.lamportTimestamp == localMetadata.lamportTimestamp, metadata != localMetadata {
                     let msg = "The metadata for the set value of \(valueKey) has conflicting metadata. local: \(localMetadata), remote: \(metadata)."
                     throw CRDTMergeError.conflictingHistory(msg)
@@ -262,13 +248,11 @@ extension ORSet: DeltaCRDT {
             } else {
                 // We don't have this entry, so we accept all the details from the diff and merge that into place
                 // with its metadata.
-                copy.metadataByValue[valueKey] = metadata
+                copy.metadataByDictKey[valueKey] = metadata
             }
             // If the remote values have a more recent clock value for this actor instance,
             // increment the clock to that higher value.
-            if metadata.lamportTimestamp.actorId == copy.currentTimestamp.actorId,
-               metadata.lamportTimestamp.clock > copy.currentTimestamp.clock
-            {
+            if metadata.lamportTimestamp.actorId == copy.currentTimestamp.actorId, metadata.lamportTimestamp.clock > copy.currentTimestamp.clock {
                 copy.currentTimestamp.clock = metadata.lamportTimestamp.clock
             }
         }
@@ -280,22 +264,22 @@ extension ORSet: DeltaCRDT {
     ///
     /// When merging two previously unrelated CRDTs, if there are values in the delta that have metadata in conflict
     /// with the local instance, then the instance with the higher value for the Lamport timestamp as a whole will be chosen and used.
-    /// This provides a deterministic output, but could be surprising.
-    /// A set may have values that reflect being added or removed, depending on the underlying metadata.
+    /// This provides a deterministic output, but could be surprising. Values for keys may exhibit unexpected values from the choice, or
+    /// reflect being removed, depending on the underlying metadata.
     ///
     /// This method will throw an exception in the scenario where two identical Lamport timestamps (same clock, same actorId)
     /// report conflicting metadata.
-    public mutating func mergingDelta(_ delta: ORSetDelta) throws {
+    public mutating func mergingDelta(_ delta: ORMapDelta) throws {
         for (valueKey, metadata) in delta.updates {
             // Check to see if we already have this entry in our set...
-            if let localMetadata = metadataByValue[valueKey] {
+            if let localMetadata = metadataByDictKey[valueKey] {
                 // The importing delta *includes* a value that we already have - which generally
                 // should only happen when we merge two previously unsynchronized CRDTs.
                 if metadata.lamportTimestamp > localMetadata.lamportTimestamp {
                     // The incoming delta includes a key we already have, but the Lamport timestamp clock value
                     // is newer than the version we're tracking, so we choose the metadata with a higher lamport
                     // timestamp.
-                    metadataByValue[valueKey] = metadata
+                    metadataByDictKey[valueKey] = metadata
                 } else if metadata.lamportTimestamp == localMetadata.lamportTimestamp, metadata != localMetadata {
                     let msg = "The metadata for the set value of \(valueKey) has conflicting metadata. local: \(localMetadata), remote: \(metadata)."
                     throw CRDTMergeError.conflictingHistory(msg)
@@ -303,7 +287,7 @@ extension ORSet: DeltaCRDT {
             } else {
                 // We don't have this entry, so we accept all the details from the diff and merge that into place
                 // with its metadata.
-                metadataByValue[valueKey] = metadata
+                metadataByDictKey[valueKey] = metadata
             }
             // If the remote values have a more recent clock value for this actor instance,
             // increment the clock to that higher value.
@@ -316,44 +300,44 @@ extension ORSet: DeltaCRDT {
     }
 }
 
-extension ORSet: Codable where T: Codable, ActorID: Codable {}
-extension ORSet.Metadata: Codable where T: Codable, ActorID: Codable {}
-extension ORSet.ORSetState: Codable where T: Codable, ActorID: Codable {}
-extension ORSet.ORSetDelta: Codable where T: Codable, ActorID: Codable {}
+extension ORMap: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
+extension ORMap.Metadata: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
+extension ORMap.ORMapState: Codable where KEY: Codable, ActorID: Codable {}
+extension ORMap.ORMapDelta: Codable where KEY: Codable, VALUE: Codable, ActorID: Codable {}
 
-extension ORSet: Sendable where T: Sendable, ActorID: Sendable {}
-extension ORSet.Metadata: Sendable where T: Sendable, ActorID: Sendable {}
-extension ORSet.ORSetState: Sendable where T: Sendable, ActorID: Sendable {}
-extension ORSet.ORSetDelta: Sendable where T: Sendable, ActorID: Sendable {}
+extension ORMap: Sendable where KEY: Sendable, VALUE: Sendable, ActorID: Sendable {}
+extension ORMap.Metadata: Sendable where KEY: Sendable, VALUE: Sendable, ActorID: Sendable {}
+extension ORMap.ORMapState: Sendable where KEY: Sendable, ActorID: Sendable {}
+extension ORMap.ORMapDelta: Sendable where KEY: Sendable, VALUE: Sendable, ActorID: Sendable {}
 
-extension ORSet: Equatable where T: Equatable {}
-extension ORSet.Metadata: Equatable where T: Equatable {}
-extension ORSet.ORSetState: Equatable where T: Equatable {}
-extension ORSet.ORSetDelta: Equatable where T: Equatable {}
+extension ORMap: Equatable where KEY: Equatable, VALUE: Equatable {}
+extension ORMap.Metadata: Equatable where KEY: Equatable, VALUE: Equatable {}
+extension ORMap.ORMapState: Equatable where KEY: Equatable {}
+extension ORMap.ORMapDelta: Equatable where KEY: Equatable, VALUE: Equatable {}
 
-extension ORSet: Hashable where T: Hashable {}
-extension ORSet.Metadata: Hashable where T: Hashable {}
-extension ORSet.ORSetState: Hashable where T: Hashable {}
-extension ORSet.ORSetDelta: Hashable where T: Hashable {}
+extension ORMap: Hashable where KEY: Hashable, VALUE: Hashable {}
+extension ORMap.Metadata: Hashable where KEY: Hashable, VALUE: Hashable {}
+extension ORMap.ORMapState: Hashable where KEY: Hashable {}
+extension ORMap.ORMapDelta: Hashable where KEY: Hashable, VALUE: Hashable {}
 
 #if DEBUG
-    extension ORSet.Metadata: ApproxSizeable {
+    extension ORMap.Metadata: ApproxSizeable {
         public func sizeInBytes() -> Int {
             MemoryLayout<Bool>.size + lamportTimestamp.sizeInBytes()
         }
     }
 
-    extension ORSet: ApproxSizeable {
+    extension ORMap: ApproxSizeable {
         public func sizeInBytes() -> Int {
-            let dictSize = metadataByValue.reduce(into: 0) { partialResult, meta in
-                partialResult += MemoryLayout<T>.size(ofValue: meta.key)
+            let dictSize = metadataByDictKey.reduce(into: 0) { partialResult, meta in
+                partialResult += MemoryLayout<KEY>.size(ofValue: meta.key)
                 partialResult += meta.value.sizeInBytes()
             }
             return currentTimestamp.sizeInBytes() + dictSize
         }
     }
 
-    extension ORSet.ORSetState: ApproxSizeable {
+    extension ORMap.ORMapState: ApproxSizeable {
         public func sizeInBytes() -> Int {
             let dictSize = maxClockValueByActor.reduce(into: 0) { partialResult, meta in
                 partialResult += MemoryLayout<ActorID>.size(ofValue: meta.key)
@@ -363,10 +347,10 @@ extension ORSet.ORSetDelta: Hashable where T: Hashable {}
         }
     }
 
-    extension ORSet.ORSetDelta: ApproxSizeable {
+    extension ORMap.ORMapDelta: ApproxSizeable {
         public func sizeInBytes() -> Int {
             let dictSize = updates.reduce(into: 0) { partialResult, meta in
-                partialResult += MemoryLayout<T>.size(ofValue: meta.key)
+                partialResult += MemoryLayout<KEY>.size(ofValue: meta.key)
                 partialResult += meta.value.sizeInBytes()
             }
             return dictSize
