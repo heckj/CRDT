@@ -17,3 +17,4 @@ Example/.build
 Example/CRDTExample.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 devcheck
 diff.html
+Package.resolved
