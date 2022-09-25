@@ -30,29 +30,34 @@ For more information on CRDTs and the algorithms behind them, see the [CRDT.tech
 
 - <doc:UsingCRDTs>
 
-### Counters
+### Concrete CRDT Collections
+
+- ``CRDT/CRDT_64``
+- ``CRDT/CRDT_UUID``
+
+### Generic Counters
 
 - ``CRDT/GCounter``
 - ``CRDT/PNCounter``
 
-### Registers
+### Generic Registers
 
 - ``CRDT/LWWRegister``
 
-### Sets
+### Generic Sets
 
 - ``CRDT/GSet``
 - ``CRDT/ORSet``
 
-### Maps
+### Generic Maps
 
 - ``CRDT/ORMap``
 
-### Lists
+### Generic Lists
 
 - ``CRDT/List``
 
-### Timestamps
+### Generic Timestamps
 
 - ``CRDT/LamportTimestamp``
 - ``CRDT/WallclockTimestamp``

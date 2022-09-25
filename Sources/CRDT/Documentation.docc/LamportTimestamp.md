@@ -19,7 +19,8 @@
 
 ### Comparing Timestamps
 
-- ``CRDT/LamportTimestamp/_(_:_:)-699eg``
+- ``CRDT/LamportTimestamp/_(_:_:)``
+- ``CRDT/LamportTimestamp/_=(_:_:)``
 
 ### Decoding a Timestamp
 

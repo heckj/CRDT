@@ -15,7 +15,8 @@
 
 ### Comparing Timestamps
 
-- ``CRDT/WallclockTimestamp/_(_:_:)-363nt``
+- ``CRDT/WallclockTimestamp/_(_:_:)``
+- ``CRDT/WallclockTimestamp/_=(_:_:)``
 
 ### Decoding a Timestamp
 
