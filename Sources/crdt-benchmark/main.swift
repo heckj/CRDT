@@ -1,4 +1,5 @@
 import CollectionsBenchmark
+import Foundation
 import CRDT
 
 // NOTE(heckj): benchmark implementations can be a bit hard to understand from the opaque inputs and structure of the code.
@@ -191,6 +192,53 @@ benchmark.add(
     { timer in
         let setA = ORSet<String, Int>(actorId: "A", input1.values)
         let setB = ORSet<String, Int>(actorId: "B", input2.values)
+
+        timer.measure {
+            if let diff = setA.delta(setB.state) {
+                do {
+                    let x = try setB.mergeDelta(diff)
+                    blackHole(x)
+                } catch {}
+            }
+        }
+        blackHole(setA)
+        blackHole(setB)
+    }
+}
+
+let uint_a: UInt64 = 23462
+let uint_b: UInt64 = 51352
+let uuid_a = UUID()
+let uuid_b = UUID()
+
+benchmark.add(
+    title: "ORSet<UInt64,Int> delta merged random",
+    input: (Benchmark.Insertions, Benchmark.Insertions).self
+) { input1, input2 in
+    { timer in
+        let setA = ORSet<UInt64, Int>(actorId: uint_a, input1.values)
+        let setB = ORSet<UInt64, Int>(actorId: uint_b, input2.values)
+
+        timer.measure {
+            if let diff = setA.delta(setB.state) {
+                do {
+                    let x = try setB.mergeDelta(diff)
+                    blackHole(x)
+                } catch {}
+            }
+        }
+        blackHole(setA)
+        blackHole(setB)
+    }
+}
+
+benchmark.add(
+    title: "ORSet<UUID,Int> delta merged random",
+    input: (Benchmark.Insertions, Benchmark.Insertions).self
+) { input1, input2 in
+    { timer in
+        let setA = ORSet<UUID, Int>(actorId: uuid_a, input1.values)
+        let setB = ORSet<UUID, Int>(actorId: uuid_b, input2.values)
 
         timer.measure {
             if let diff = setA.delta(setB.state) {

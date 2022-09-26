@@ -42,6 +42,14 @@
     },
     {
       "kind": "chart",
+      "title": "ORSet merged (copy) UInt64 vs UUID ActorID",
+      "tasks": [
+        "ORSet<UInt64,Int> delta merged random",
+        "ORSet<UUID,Int> delta merged random",
+      ]
+    },
+    {
+      "kind": "chart",
       "title": "List append and insertion",
       "tasks": [
         "List append",
