@@ -12,7 +12,7 @@
 /// The `List` implementation is based a causal tree implementation, stored within array structures,
 /// as described in [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
-public struct List<ActorID: Hashable & PartiallyOrderable, T: Hashable & Comparable & Equatable> {
+public struct List<ActorID: Hashable & PartiallyOrderable, T: Hashable & Equatable> {
     /// Causal Tree Metadata
     public struct Metadata: CustomStringConvertible, Identifiable {
         /// A unique identifier, made up of a Lamport timestamp and the collaboration instance Id.
