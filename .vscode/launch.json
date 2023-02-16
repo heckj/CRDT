@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug crdt-benchmark",
+            "program": "${workspaceFolder:CRDT}/.build/debug/crdt-benchmark",
+            "args": [],
+            "cwd": "${workspaceFolder:CRDT}",
+            "preLaunchTask": "swift: Build Debug crdt-benchmark"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Release crdt-benchmark",
+            "program": "${workspaceFolder:CRDT}/.build/release/crdt-benchmark",
+            "args": [],
+            "cwd": "${workspaceFolder:CRDT}",
+            "preLaunchTask": "swift: Build Release crdt-benchmark"
+        }
+    ]
+}
