@@ -1,0 +1,5 @@
+CRDT is released under an MIT License, see LICENSE for details.
+
+Copyright 2022, Joseph Heck.
+
+Portions of the source code are also Copyright (c) 2020 appdecentral, used under license.
