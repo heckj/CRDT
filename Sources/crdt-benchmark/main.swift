@@ -1,6 +1,6 @@
 import CollectionsBenchmark
-import Foundation
 import CRDT
+import Foundation
 
 // NOTE(heckj): benchmark implementations can be a bit hard to understand from the opaque inputs and structure of the code.
 // It's worthwhile to look at existing benchmarks that Karoy created for swift-collections:
