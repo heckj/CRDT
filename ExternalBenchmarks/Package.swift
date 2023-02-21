@@ -18,7 +18,8 @@ let package = Package(
             dependencies: [
                 "CRDT",
                 .product(name: "BenchmarkSupport", package: "package-benchmark")
-            ]),
+            ],
+            path: "Benchmarks/ExternalBenchmarks"),
     ]
 )
 
