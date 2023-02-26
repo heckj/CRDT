@@ -10,7 +10,7 @@ func benchmarks() {
     Benchmark.defaultConfiguration.desiredDuration = .seconds(1)
 
     Benchmark("Create single-character List CRDT",
-              configuration: .init(metrics: [.throughput, .wallClock], throughputScalingFactor: .kilo)) { benchmark in
+              configuration: .init(metrics: BenchmarkMetric.all, throughputScalingFactor: .kilo)) { benchmark in
         for _ in benchmark.throughputIterations {
             blackHole(blackHole(List(actorId: "a", ["a"])))
         }
