@@ -10,6 +10,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ordo-one/package-benchmark", .upToNextMajor(from: "0.8.0")),
+        .package(url: "https://github.com/swift-extras/swift-extras-json.git", .upToNextMajor(from: "0.6.0")),
         .package(path: "../")
     ],
     targets: [
@@ -17,9 +18,16 @@ let package = Package(
             name: "ExternalBenchmarks",
             dependencies: [
                 "CRDT",
+                .product(name: "ExtrasJSON", package: "swift-extras-json"),
                 .product(name: "BenchmarkSupport", package: "package-benchmark")
             ],
-            path: "Benchmarks/ExternalBenchmarks"),
+            path: "Benchmarks/ExternalBenchmarks",
+            exclude: [ "README.md" ],
+            resources: [
+                .process("Resources/editing-trace.json"),
+                .process("Resources/final_text.txt")
+            ]
+        )
     ]
 )
 
