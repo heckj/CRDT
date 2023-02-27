@@ -1,9 +1,9 @@
 {
-	"name": "Swift",
+    "name": "Swift",
     "image": "swift:5.7",
     "features": {
         "ghcr.io/devcontainers/features/common-utils:2": {
-            "installZsh": "false",
+            "installZsh": "true",
             "username": "vscode",
             "userUid": "1000",
             "userGid": "1000",
@@ -12,6 +12,8 @@
         "ghcr.io/devcontainers/features/git:1": {
             "version": "os-provided",
             "ppa": "false"
+        }
+        "ghcr.io/heckj/jemalloc/jemalloc:1": {
         }
     },
     "runArgs": [
