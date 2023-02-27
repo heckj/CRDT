@@ -36,11 +36,11 @@ The two most notable change from Drew's code are:
 
 Like the [ReplicatingTypes](https://github.com/appdecentral/replicatingtypes) package, this package is available under the MIT license for you to use as you like, asking only for recognition that it was sourced.
 
-If your goal is creating [local-first software](https://www.inkandswitch.com/local-first/), this implementation is start, but (in my opinion) incomplete to those needs. 
+If your goal is creating [local-first software](https://www.inkandswitch.com/local-first/), this implementation is start, but (in my opinion) incomplete to those needs.
 In particular, there are none of the serialization optimizations included that would reduce the space needed by the instances when serialized in their entirety to be stored.
 There are also none of the optimizations that other libraries (for example [Automerge](https://automerge.org) or [Yjs](https://yjs.dev)) that improve memory overhead needed to support longer-form collaborative text interactions.
 
-These limitations may change in the future, and contributions are welcome.  
+These limitations may change in the future, and contributions are welcome.
 
 ## Alternative Packages and Libraries
 
@@ -75,3 +75,16 @@ Running the library:
     swift run -c release crdt-benchmark library render Benchmarks/results.json --library Benchmarks/Library.json --output Benchmarks
 
 [Current Benchmarks](./Benchmarks/Results.md)
+
+There's also stubbed benchmarks using package-benchmark under the ExternalBenchmarks directory.
+These additional benchmarks are primarily one-dimensional and DO require that additional libraries are
+installed (jemalloc) in order for them to operate. If you just want to explore, the .devContainer
+setting in this repository includes that library - so it's easy to trial this out from within
+VSCode and Docker. To explore the 1-dimension external benchmarks:
+
+```bash
+cd ExternalBenchmarks
+swift package benchmark
+```
+
+
