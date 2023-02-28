@@ -11,6 +11,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ordo-one/package-benchmark", .upToNextMajor(from: "0.8.0")),
         .package(url: "https://github.com/swift-extras/swift-extras-json.git", .upToNextMajor(from: "0.6.0")),
+        .package(url: "https://github.com/michaeleisel/ZippyJSON.git", .upToNextMajor(from: "1.2.0")),
         .package(path: "../")
     ],
     targets: [
@@ -19,7 +20,8 @@ let package = Package(
             dependencies: [
                 "CRDT",
                 .product(name: "ExtrasJSON", package: "swift-extras-json"),
-                .product(name: "BenchmarkSupport", package: "package-benchmark")
+                .product(name: "BenchmarkSupport", package: "package-benchmark"),
+                .product(name: "ZippyJSON", package: "ZippyJSON")
             ],
             path: "Benchmarks/ExternalBenchmarks",
             exclude: [ "README.md" ],
