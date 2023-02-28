@@ -5,6 +5,35 @@ import CRDT
 
 @main extension BenchmarkRunner {} // Required for the main() definition to no get linker errors
 
+/*
+ 
+Interesting comparison benchmark for parsing the JSON, turns out that hand-parsing is a
+LOT faster than even ExtrasJSON Decodable conformance implementations. ExtrasJSON is still
+notably faster than Foundation, but the hand-parse optimization was surprising to me.
+ 
+ Throughput (scaled / s)
+ ╒════════════════════════════════════╤═════╤═════╤═════╤═════╤═════╤═════╤══════╤═════════╕
+ │ Test                               │  p0 │ p25 │ p50 │ p75 │ p90 │ p99 │ p100 │ Samples │
+ ╞════════════════════════════════════╪═════╪═════╪═════╪═════╪═════╪═════╪══════╪═════════╡
+ │ Custom parse JSON into trace       │  83 │  77 │  76 │  75 │  74 │  66 │   59 │     300 │
+ ├────────────────────────────────────┼─────┼─────┼─────┼─────┼─────┼─────┼──────┼─────────┤
+ │ ExtrasJSON decode JSON into trace  │   6 │   6 │   6 │   6 │   6 │   5 │    5 │      29 │
+ ├────────────────────────────────────┼─────┼─────┼─────┼─────┼─────┼─────┼──────┼─────────┤
+ │ Foundation decode JSON into trace  │   1 │   1 │   1 │   1 │   1 │   1 │    1 │       7 │
+ ╘════════════════════════════════════╧═════╧═════╧═════╧═════╧═════╧═════╧══════╧═════════╛
+
+ Time (wall clock)
+ ╒════════════════════════════════════════╤═════╤═════╤═════╤═════╤═════╤═════╤══════╤═════════╕
+ │ Test                                   │  p0 │ p25 │ p50 │ p75 │ p90 │ p99 │ p100 │ Samples │
+ ╞════════════════════════════════════════╪═════╪═════╪═════╪═════╪═════╪═════╪══════╪═════════╡
+ │ Custom parse JSON into trace (ms)      │  12 │  13 │  13 │  13 │  13 │  15 │   17 │     300 │
+ ├────────────────────────────────────────┼─────┼─────┼─────┼─────┼─────┼─────┼──────┼─────────┤
+ │ ExtrasJSON decode JSON into trace (ms) │ 175 │ 177 │ 177 │ 178 │ 180 │ 184 │  184 │      29 │
+ ├────────────────────────────────────────┼─────┼─────┼─────┼─────┼─────┼─────┼──────┼─────────┤
+ │ Foundation decode JSON into trace (ms) │ 825 │ 825 │ 826 │ 826 │ 827 │ 827 │  827 │       7 │
+ ╘════════════════════════════════════════╧═════╧═════╧═════╧═════╧═════╧═════╧══════╧═════════╛
+ 
+ */
 enum TextOp {
     case insert(cursor: UInt32, value: String)
     case delete(cursor: UInt32, count: UInt32)
@@ -78,14 +107,11 @@ func decodeXIntoTrace(data: Data) async -> Trace {
     }
 }
 
-func parseJSONIntoTrace(topOfTrace: JSONValue) async -> [TextOp] {
-    // var insert = 0
-    // var delete = 0
+func parseJSONIntoTrace(topOfTrace: JSONValue) async -> Trace {
     var trace:[TextOp] = []
 
     switch topOfTrace {
     case let .array(opsJSONValues):
-        // print("Identified \(opsJSONValues.count)")
         for opsJSONValue in opsJSONValues {
             if case let .array(internalOpValues) = opsJSONValue {
                 let cursorPos: UInt32
@@ -96,13 +122,11 @@ func parseJSONIntoTrace(topOfTrace: JSONValue) async -> [TextOp] {
                 }
                 if case let .number(opString) = internalOpValues[1] {
                     if opString == "0" {
-                        // insert += 1
                         if case let .string(foundInsertString) = internalOpValues[2] {
                             trace.append(TextOp.insert(cursor: cursorPos, value: foundInsertString))
                         }
                     }
                     if opString == "1" {
-                        // delete += 1
                         trace.append(TextOp.delete(cursor: cursorPos, count: 1))
                     }
                 }
@@ -119,29 +143,28 @@ func parseJSONIntoTrace(topOfTrace: JSONValue) async -> [TextOp] {
 
 @_dynamicReplacement(for: registerBenchmarks) // And this is how we register our benchmarks
 func benchmarks() {
-    // Benchmark.defaultConfiguration.timeUnits = .microseconds
-    Benchmark.defaultConfiguration.desiredIterations = .count(1)
-    Benchmark.defaultConfiguration.desiredDuration = .seconds(3)
+    Benchmark.defaultConfiguration.desiredIterations = .count(300)
+    Benchmark.defaultConfiguration.desiredDuration = .seconds(5)
 
-    Benchmark("Loading JSON trace data",
-              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 20)) { benchmark in
-        for _ in benchmark.throughputIterations {
-            blackHole(await loadEditingTrace())
-        }
-    }
+//    Benchmark("Loading JSON trace data",
+//              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 20)) { benchmark in
+//        for _ in benchmark.throughputIterations {
+//            blackHole(await loadEditingTrace())
+//        }
+//    }
+//
+//    Benchmark("parse JSON with Swift Extras parser",
+//              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 50)) { benchmark in
+//        for _ in benchmark.throughputIterations {
+//            let data = await loadEditingTrace()
+//            benchmark.startMeasurement()
+//            blackHole(await parseDataIntoJSON(data: data))
+//            benchmark.stopMeasurement()
+//        }
+//    }
 
-    Benchmark("parse JSON with Swift Extras parser",
-              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 50)) { benchmark in
-        for _ in benchmark.throughputIterations {
-            let data = await loadEditingTrace()
-            benchmark.startMeasurement()
-            blackHole(await parseDataIntoJSON(data: data))
-            benchmark.stopMeasurement()
-        }
-    }
-
-    Benchmark("process JSON into trace data",
-              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 30)) { benchmark in
+    Benchmark("Custom parse JSON into trace",
+              configuration: .init(metrics: [.throughput, .wallClock])) { benchmark in
         for _ in benchmark.throughputIterations {
             let data = await loadEditingTrace()
             let jsonValue = await parseDataIntoJSON(data: data)
@@ -152,7 +175,7 @@ func benchmarks() {
     }
 
     Benchmark("Foundation decode JSON into trace",
-              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 300)) { benchmark in
+              configuration: .init(metrics: [.throughput, .wallClock])) { benchmark in
         for _ in benchmark.throughputIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
@@ -162,7 +185,7 @@ func benchmarks() {
     }
 
     Benchmark("ExtrasJSON decode JSON into trace",
-              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 300)) { benchmark in
+              configuration: .init(metrics: [.throughput, .wallClock])) { benchmark in
         for _ in benchmark.throughputIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
@@ -171,34 +194,34 @@ func benchmarks() {
         }
     }
 
-    Benchmark("Create single-character List CRDT",
-              configuration: .init(metrics: BenchmarkMetric.all, throughputScalingFactor: .kilo)) { benchmark in
-        for _ in benchmark.throughputIterations {
-            blackHole(blackHole(List(actorId: "a", ["a"])))
-        }
-    }
-
-    Benchmark("List six-character append",
-              configuration: .init(metrics: [.throughput, .wallClock], throughputScalingFactor: .kilo)) { benchmark in
-        for _ in benchmark.throughputIterations {
-            var mylist = List(actorId: "a", ["a"])
-            benchmark.startMeasurement()
-            mylist.append(" hello")
-            benchmark.stopMeasurement()
-        }
-    }
-
-    Benchmark("List six-character append, individual characters",
-              configuration: .init(metrics: [.throughput, .wallClock], throughputScalingFactor: .kilo)) { benchmark in
-        for _ in benchmark.throughputIterations {
-            var mylist = List(actorId: "a", ["a"])
-            let appendList = [" ", "h", "e", "l", "l", "o"]
-            benchmark.startMeasurement()
-            for val in appendList {
-                mylist.append(val)
-            }
-            benchmark.stopMeasurement()
-        }
-    }
+//    Benchmark("Create single-character List CRDT",
+//              configuration: .init(metrics: BenchmarkMetric.all, throughputScalingFactor: .kilo)) { benchmark in
+//        for _ in benchmark.throughputIterations {
+//            blackHole(blackHole(List(actorId: "a", ["a"])))
+//        }
+//    }
+//
+//    Benchmark("List six-character append",
+//              configuration: .init(metrics: [.throughput, .wallClock], throughputScalingFactor: .kilo)) { benchmark in
+//        for _ in benchmark.throughputIterations {
+//            var mylist = List(actorId: "a", ["a"])
+//            benchmark.startMeasurement()
+//            mylist.append(" hello")
+//            benchmark.stopMeasurement()
+//        }
+//    }
+//
+//    Benchmark("List six-character append, individual characters",
+//              configuration: .init(metrics: [.throughput, .wallClock], throughputScalingFactor: .kilo)) { benchmark in
+//        for _ in benchmark.throughputIterations {
+//            var mylist = List(actorId: "a", ["a"])
+//            let appendList = [" ", "h", "e", "l", "l", "o"]
+//            benchmark.startMeasurement()
+//            for val in appendList {
+//                mylist.append(val)
+//            }
+//            benchmark.stopMeasurement()
+//        }
+//    }
 
 }
