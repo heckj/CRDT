@@ -10,6 +10,34 @@ enum TextOp {
     case delete(cursor: UInt32, count: UInt32)
 }
 
+typealias Trace = [TextOp]
+
+extension TextOp: Decodable {
+    init(from decoder: Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        if container.count ?? 0 < 2 {
+            throw DecodingError.typeMismatch(
+               Self.self,
+               .init(codingPath: decoder.codingPath,
+                     debugDescription: "Fewer than two elements within array")
+            )
+        }
+        let column = try container.decode(UInt32.self)
+        let optype = try container.decode(UInt32.self)
+        switch optype {
+            case 0:
+                let insertedString = try container.decode(String.self)
+            self = .insert(cursor: column, value: insertedString)
+        case 1: self = .delete(cursor: column, count: 1)
+            default: throw DecodingError.typeMismatch(
+                Self.self,
+                .init(codingPath: decoder.codingPath,
+                      debugDescription: "Unknown op type: \(optype)")
+                )
+        }
+    }
+}
+
 func loadEditingTrace () async  -> Data {
     guard let traceURL = Bundle.module.url(forResource: "editing-trace", withExtension: "json") else {
         fatalError("Unable to find editing-trace.json in bundle")
@@ -27,6 +55,24 @@ func loadEditingTrace () async  -> Data {
 func parseDataIntoJSON(data: Data) async -> JSONValue {
     do {
         return try ExtrasJSON.JSONParser().parse(bytes: data)
+    } catch {
+        fatalError("failed parse JSON")
+    }
+}
+
+func decodeIntoTrace(data: Data) async -> Trace {
+    let decoder = JSONDecoder()
+    do {
+        return try decoder.decode(Trace.self, from: data)
+    } catch {
+        fatalError("failed parse JSON")
+    }
+}
+
+func decodeXIntoTrace(data: Data) async -> Trace {
+    let decoder = XJSONDecoder()
+    do {
+        return try decoder.decode(Trace.self, from: data)
     } catch {
         fatalError("failed parse JSON")
     }
@@ -101,6 +147,26 @@ func benchmarks() {
             let jsonValue = await parseDataIntoJSON(data: data)
             benchmark.startMeasurement()
             blackHole(await parseJSONIntoTrace(topOfTrace: jsonValue))
+            benchmark.stopMeasurement()
+        }
+    }
+
+    Benchmark("Foundation decode JSON into trace",
+              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 300)) { benchmark in
+        for _ in benchmark.throughputIterations {
+            let data = await loadEditingTrace()
+            benchmark.startMeasurement()
+            blackHole(await decodeIntoTrace(data: data))
+            benchmark.stopMeasurement()
+        }
+    }
+
+    Benchmark("ExtrasJSON decode JSON into trace",
+              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 300)) { benchmark in
+        for _ in benchmark.throughputIterations {
+            let data = await loadEditingTrace()
+            benchmark.startMeasurement()
+            blackHole(await decodeXIntoTrace(data: data))
             benchmark.stopMeasurement()
         }
     }
