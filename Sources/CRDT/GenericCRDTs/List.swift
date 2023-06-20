@@ -124,7 +124,7 @@ public struct List<ActorID: Hashable & PartiallyOrderable, T: Hashable & Equatab
     ///   - values: The values to insert into the list.
     public init(actorId: ActorID, clock: UInt64 = 0, _ values: [T]) {
         currentTimestamp = LamportTimestamp(clock: clock, actorId: actorId)
-        values.forEach { self.append($0) }
+        values.forEach { append($0) }
     }
 }
 

@@ -1,47 +1,47 @@
 import BenchmarkSupport // imports supporting infrastructure for running the benchmarks
-import Foundation
-import ExtrasJSON
-import ZippyJSON
 import CRDT
+import ExtrasJSON
+import Foundation
+import ZippyJSON
 
 @main extension BenchmarkRunner {} // Required for the main() definition to no get linker errors
 
 /*
- 
-Interesting comparison benchmark for parsing the JSON, turns out that hand-parsing is a
-LOT faster than even ExtrasJSON Decodable conformance implementations. ExtrasJSON is still
-notably faster than Foundation, but the hand-parse optimization was surprising to me.
- 
-    swift package benchmark --grouping metric
- 
- ExternalBenchmarks
- ============================================================================================================================
 
- Throughput (scaled / s)
- ╒════════════════════════════════════════╤═════╤═════╤══════╤═════╤═════╤═════╤══════╤═════════╕
- │ Test                                   │  p0 │ p25 │  p50 │ p75 │ p90 │ p99 │ p100 │ Samples │
- ╞════════════════════════════════════════╪═════╪═════╪══════╪═════╪═════╪═════╪══════╪═════════╡
- │ Custom parse JSON into trace           │  82 │  79 │   78 │  76 │  75 │  73 │   68 │     300 │
- ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
- │ ExtrasJSON decode JSON into trace      │   6 │   6 │    6 │   6 │   6 │   5 │    5 │      29 │
- ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
- │ Foundation decode JSON into trace      │   1 │   1 │    1 │   1 │   1 │   1 │    1 │       7 │
- ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
- │ ZippyJSON decode JSON into trace       │   8 │   8 │    8 │   7 │   7 │   7 │    7 │      38 │
- ╘════════════════════════════════════════╧═════╧═════╧══════╧═════╧═════╧═════╧══════╧═════════
- Time (wall clock)                           
- ╒════════════════════════════════════════╤═════╤═════╤══════╤═════╤═════╤═════╤══════╤═════════╕
- │ Test                                   │  p0 │ p25 │  p50 │ p75 │ p90 │ p99 │ p100 │ Samples │
- ╞════════════════════════════════════════╪═════╪═════╪══════╪═════╪═════╪═════╪══════╪═════════╡
- │ Custom parse JSON into trace (ms)      │  12 │  13 │   13 │  13 │  13 │  14 │   15 │     300 │
- ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
- │ ExtrasJSON decode JSON into trace (ms) │ 176 │ 176 │  177 │ 178 │ 180 │ 184 │  184 │      29 │
- ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
- │ Foundation decode JSON into trace (ms) │ 823 │ 823 │  825 │ 825 │ 825 │ 825 │  825 │       7 │
- ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
- │ ZippyJSON decode JSON into trace (ms)  │ 132 │ 132 │  133 │ 134 │ 134 │ 136 │  136 │      38 │
- ╘════════════════════════════════════════╧═════╧═════╧══════╧═════╧═════╧═════╧══════╧═════════╛
- */
+ Interesting comparison benchmark for parsing the JSON, turns out that hand-parsing is a
+ LOT faster than even ExtrasJSON Decodable conformance implementations. ExtrasJSON is still
+ notably faster than Foundation, but the hand-parse optimization was surprising to me.
+
+     swift package benchmark --grouping metric
+
+  ExternalBenchmarks
+  ============================================================================================================================
+
+  Throughput (scaled / s)
+  ╒════════════════════════════════════════╤═════╤═════╤══════╤═════╤═════╤═════╤══════╤═════════╕
+  │ Test                                   │  p0 │ p25 │  p50 │ p75 │ p90 │ p99 │ p100 │ Samples │
+  ╞════════════════════════════════════════╪═════╪═════╪══════╪═════╪═════╪═════╪══════╪═════════╡
+  │ Custom parse JSON into trace           │  82 │  79 │   78 │  76 │  75 │  73 │   68 │     300 │
+  ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
+  │ ExtrasJSON decode JSON into trace      │   6 │   6 │    6 │   6 │   6 │   5 │    5 │      29 │
+  ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
+  │ Foundation decode JSON into trace      │   1 │   1 │    1 │   1 │   1 │   1 │    1 │       7 │
+  ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
+  │ ZippyJSON decode JSON into trace       │   8 │   8 │    8 │   7 │   7 │   7 │    7 │      38 │
+  ╘════════════════════════════════════════╧═════╧═════╧══════╧═════╧═════╧═════╧══════╧═════════
+  Time (wall clock)
+  ╒════════════════════════════════════════╤═════╤═════╤══════╤═════╤═════╤═════╤══════╤═════════╕
+  │ Test                                   │  p0 │ p25 │  p50 │ p75 │ p90 │ p99 │ p100 │ Samples │
+  ╞════════════════════════════════════════╪═════╪═════╪══════╪═════╪═════╪═════╪══════╪═════════╡
+  │ Custom parse JSON into trace (ms)      │  12 │  13 │   13 │  13 │  13 │  14 │   15 │     300 │
+  ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
+  │ ExtrasJSON decode JSON into trace (ms) │ 176 │ 176 │  177 │ 178 │ 180 │ 184 │  184 │      29 │
+  ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
+  │ Foundation decode JSON into trace (ms) │ 823 │ 823 │  825 │ 825 │ 825 │ 825 │  825 │       7 │
+  ├────────────────────────────────────────┼─────┼─────┼──────┼─────┼─────┼─────┼──────┼─────────┤
+  │ ZippyJSON decode JSON into trace (ms)  │ 132 │ 132 │  133 │ 134 │ 134 │ 136 │  136 │      38 │
+  ╘════════════════════════════════════════╧═════╧═════╧══════╧═════╧═════╧═════╧══════╧═════════╛
+  */
 enum TextOp {
     case insert(cursor: UInt32, value: String)
     case delete(cursor: UInt32, count: UInt32)
@@ -54,28 +54,28 @@ extension TextOp: Decodable {
         var container = try decoder.unkeyedContainer()
         if container.count ?? 0 < 2 {
             throw DecodingError.typeMismatch(
-               Self.self,
-               .init(codingPath: decoder.codingPath,
-                     debugDescription: "Fewer than two elements within array")
+                Self.self,
+                .init(codingPath: decoder.codingPath,
+                      debugDescription: "Fewer than two elements within array")
             )
         }
         let column = try container.decode(UInt32.self)
         let optype = try container.decode(UInt32.self)
         switch optype {
-            case 0:
-                let insertedString = try container.decode(String.self)
+        case 0:
+            let insertedString = try container.decode(String.self)
             self = .insert(cursor: column, value: insertedString)
         case 1: self = .delete(cursor: column, count: 1)
-            default: throw DecodingError.typeMismatch(
+        default: throw DecodingError.typeMismatch(
                 Self.self,
                 .init(codingPath: decoder.codingPath,
                       debugDescription: "Unknown op type: \(optype)")
-                )
+            )
         }
     }
 }
 
-func loadEditingTrace () async  -> Data {
+func loadEditingTrace() async -> Data {
     guard let traceURL = Bundle.module.url(forResource: "editing-trace", withExtension: "json") else {
         fatalError("Unable to find editing-trace.json in bundle")
     }
@@ -125,7 +125,7 @@ func decodeZIntoTrace(data: Data) async -> Trace {
 }
 
 func parseJSONIntoTrace(topOfTrace: JSONValue) async -> Trace {
-    var trace:[TextOp] = []
+    var trace: [TextOp] = []
 
     switch topOfTrace {
     case let .array(opsJSONValues):
@@ -181,42 +181,46 @@ func benchmarks() {
 //    }
 
     Benchmark("Custom parse JSON into trace",
-              configuration: .init(metrics: [.throughput, .wallClock])) { benchmark in
+              configuration: .init(metrics: [.throughput, .wallClock]))
+    { benchmark in
         for _ in benchmark.throughputIterations {
             let data = await loadEditingTrace()
             let jsonValue = await parseDataIntoJSON(data: data)
             benchmark.startMeasurement()
-            blackHole(await parseJSONIntoTrace(topOfTrace: jsonValue))
+            await blackHole(parseJSONIntoTrace(topOfTrace: jsonValue))
             benchmark.stopMeasurement()
         }
     }
 
     Benchmark("Foundation decode JSON into trace",
-              configuration: .init(metrics: [.throughput, .wallClock])) { benchmark in
+              configuration: .init(metrics: [.throughput, .wallClock]))
+    { benchmark in
         for _ in benchmark.throughputIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
-            blackHole(await decodeIntoTrace(data: data))
+            await blackHole(decodeIntoTrace(data: data))
             benchmark.stopMeasurement()
         }
     }
 
     Benchmark("ExtrasJSON decode JSON into trace",
-              configuration: .init(metrics: [.throughput, .wallClock])) { benchmark in
+              configuration: .init(metrics: [.throughput, .wallClock]))
+    { benchmark in
         for _ in benchmark.throughputIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
-            blackHole(await decodeXIntoTrace(data: data))
+            await blackHole(decodeXIntoTrace(data: data))
             benchmark.stopMeasurement()
         }
     }
 
     Benchmark("ZippyJSON decode JSON into trace",
-              configuration: .init(metrics: [.throughput, .wallClock])) { benchmark in
+              configuration: .init(metrics: [.throughput, .wallClock]))
+    { benchmark in
         for _ in benchmark.throughputIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
-            blackHole(await decodeZIntoTrace(data: data))
+            await blackHole(decodeZIntoTrace(data: data))
             benchmark.stopMeasurement()
         }
     }
@@ -250,5 +254,4 @@ func benchmarks() {
 //            benchmark.stopMeasurement()
 //        }
 //    }
-
 }

@@ -50,7 +50,7 @@ public struct GSet<ActorID: Hashable & PartiallyOrderable, T: Hashable> {
     ///   - elements: An list of elements to add to the set.
     public init(actorId: ActorID, clock: UInt64 = 0, _ elements: [T]) {
         self = .init(actorId: actorId, clock: clock)
-        elements.forEach { self.insert($0) }
+        elements.forEach { insert($0) }
     }
 }
 

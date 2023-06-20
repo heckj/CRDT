@@ -6,13 +6,13 @@ import PackageDescription
 let package = Package(
     name: "ExternalBenchmarks",
     platforms: [
-        .macOS(.v13)
+        .macOS(.v13),
     ],
     dependencies: [
         .package(url: "https://github.com/ordo-one/package-benchmark", .upToNextMajor(from: "0.8.0")),
         .package(url: "https://github.com/swift-extras/swift-extras-json.git", .upToNextMajor(from: "0.6.0")),
         .package(url: "https://github.com/michaeleisel/ZippyJSON.git", .upToNextMajor(from: "1.2.0")),
-        .package(path: "../")
+        .package(path: "../"),
     ],
     targets: [
         .executableTarget(
@@ -21,15 +21,14 @@ let package = Package(
                 "CRDT",
                 .product(name: "ExtrasJSON", package: "swift-extras-json"),
                 .product(name: "BenchmarkSupport", package: "package-benchmark"),
-                .product(name: "ZippyJSON", package: "ZippyJSON")
+                .product(name: "ZippyJSON", package: "ZippyJSON"),
             ],
             path: "Benchmarks/ExternalBenchmarks",
-            exclude: [ "README.md" ],
+            exclude: ["README.md"],
             resources: [
                 .process("Resources/editing-trace.json"),
-                .process("Resources/final_text.txt")
+                .process("Resources/final_text.txt"),
             ]
-        )
+        ),
     ]
 )
-
