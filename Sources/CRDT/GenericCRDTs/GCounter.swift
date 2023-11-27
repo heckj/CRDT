@@ -9,7 +9,7 @@
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct GCounter<ActorID: Hashable & PartiallyOrderable> {
     private var _storage: UInt
-    internal let selfId: ActorID
+    let selfId: ActorID
 
     /// The counter's value.
     public var value: UInt {

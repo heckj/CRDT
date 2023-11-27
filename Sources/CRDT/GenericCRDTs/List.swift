@@ -100,9 +100,9 @@ public struct List<ActorID: Hashable & PartiallyOrderable, T: Hashable & Equatab
     }
 
     // A combination of Lamport timestamp & actor ID
-    internal var currentTimestamp: LamportTimestamp<ActorID>
-    internal var activeValues: [Metadata] = []
-    internal var tombstones: [Metadata] = []
+    var currentTimestamp: LamportTimestamp<ActorID>
+    var activeValues: [Metadata] = []
+    var tombstones: [Metadata] = []
 
     /// The values of the list.
     public var values: [T] { activeValues.map(\.value) }

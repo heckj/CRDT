@@ -9,7 +9,7 @@
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct GSet<ActorID: Hashable & PartiallyOrderable, T: Hashable> {
     private var _storage: Set<T>
-    internal var currentTimestamp: LamportTimestamp<ActorID>
+    var currentTimestamp: LamportTimestamp<ActorID>
 
     /// The set of values.
     public var values: Set<T> {

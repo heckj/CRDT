@@ -1,5 +1,5 @@
 //
-//  ORSetTests.swift
+//  ORMapTests.swift
 //
 
 @testable import CRDT

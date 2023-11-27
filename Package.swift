@@ -4,6 +4,7 @@ import PackageDescription
 
 var globalSwiftSettings: [PackageDescription.SwiftSetting] = []
 #if swift(>=5.7)
+  #if canImport(Foundation)
     if ProcessInfo.processInfo.environment["CI"] != nil {
         globalSwiftSettings.append(.unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"]))
         /*
@@ -11,7 +12,7 @@ var globalSwiftSettings: [PackageDescription.SwiftSetting] = []
          Set `strict-concurrency` to `targeted` to enforce Sendable and actor-isolation checks
          in your code. This explicitly verifies that `Sendable` constraints are met when you
          mark one of your types as `Sendable`.
-         
+
          This mode is essentially a bit of a hybrid between the behavior that's intended in
          Swift 6, and the default in Swift 5.7. Use this mode to have a bit of checking on
          your code that uses Swift concurrency without too many warnings and / or errors in
@@ -21,6 +22,7 @@ var globalSwiftSettings: [PackageDescription.SwiftSetting] = []
          constraints, essentially as they will work in Swift 6.
          */
     }
+  #endif
 #endif
 
 let package = Package(

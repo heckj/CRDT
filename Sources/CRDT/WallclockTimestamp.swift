@@ -10,8 +10,8 @@ import Foundation
 /// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
 /// "at the same time".
 public struct WallclockTimestamp<ActorID: Hashable & PartiallyOrderable>: Identifiable, PartiallyOrderable {
-    internal var clock: TimeInterval
-    internal var actorId: ActorID
+    var clock: TimeInterval
+    var actorId: ActorID
 
     /// A stable, unique identity for the wallclock timestamp.
     public var id: String {

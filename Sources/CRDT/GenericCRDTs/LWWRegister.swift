@@ -15,8 +15,8 @@ import Foundation
 public struct LWWRegister<ActorID: Hashable & PartiallyOrderable, T> {
     /// A struct that represents the state of an LWWRegister
     public struct Metadata {
-        internal var value: T
-        internal var clockId: WallclockTimestamp<ActorID>
+        var value: T
+        var clockId: WallclockTimestamp<ActorID>
 
         init(value: T, id: ActorID, timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) {
             self.value = value
@@ -37,7 +37,7 @@ public struct LWWRegister<ActorID: Hashable & PartiallyOrderable, T> {
     }
 
     private var _storage: Metadata
-    internal let selfId: ActorID
+    let selfId: ActorID
 
     /// The value of the register.
     public var value: T {

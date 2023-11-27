@@ -10,7 +10,7 @@
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368).
 public struct ORMap<ActorID: Hashable & PartiallyOrderable, KEY: Hashable, VALUE: Equatable> {
-    internal struct Metadata: CustomStringConvertible {
+    struct Metadata: CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
         var value: VALUE
@@ -25,8 +25,8 @@ public struct ORMap<ActorID: Hashable & PartiallyOrderable, KEY: Hashable, VALUE
         }
     }
 
-    internal var currentTimestamp: LamportTimestamp<ActorID>
-    internal var metadataByDictKey: [KEY: Metadata]
+    var currentTimestamp: LamportTimestamp<ActorID>
+    var metadataByDictKey: [KEY: Metadata]
 
     /// Creates a new grow-only set..
     /// - Parameters:

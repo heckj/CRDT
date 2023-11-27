@@ -8,8 +8,8 @@
 /// where the clock value is identical. These scenarios happen when two independent CRDTs update internal values
 /// "at the same time".
 public struct LamportTimestamp<ActorID: Hashable & PartiallyOrderable>: Identifiable, PartiallyOrderable {
-    internal var clock: UInt64 = 0
-    internal var actorId: ActorID
+    var clock: UInt64 = 0
+    var actorId: ActorID
 
     /// A stable, unique identity for the Lamport timestamp.
     public var id: String {

@@ -11,7 +11,7 @@
 /// Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro, Carlos Baquero, Valter Balegas, and Sérgio Duarte (2012).
 /// arXiv:[1210.3368](https://arxiv.org/abs/1210.3368)
 public struct ORSet<ActorID: Hashable & PartiallyOrderable, T: Hashable> {
-    internal struct Metadata: CustomStringConvertible {
+    struct Metadata: CustomStringConvertible {
         var isDeleted: Bool
         var lamportTimestamp: LamportTimestamp<ActorID>
         var description: String {
@@ -24,8 +24,8 @@ public struct ORSet<ActorID: Hashable & PartiallyOrderable, T: Hashable> {
         }
     }
 
-    internal var currentTimestamp: LamportTimestamp<ActorID>
-    internal var metadataByValue: [T: Metadata]
+    var currentTimestamp: LamportTimestamp<ActorID>
+    var metadataByValue: [T: Metadata]
 
     /// Creates a new grow-only set..
     /// - Parameters:

@@ -8,9 +8,9 @@
 /// [A comprehensive study of Convergent and Commutative Replicated Data Types](https://hal.inria.fr/inria-00555588/document)”
 /// by Marc Shapiro, Nuno Preguiça, Carlos Baquero, and Marek Zawirski (2011).
 public struct PNCounter<ActorID: Hashable & PartiallyOrderable> {
-    internal var pos_value: UInt
-    internal var neg_value: UInt
-    internal let selfId: ActorID
+    var pos_value: UInt
+    var neg_value: UInt
+    let selfId: ActorID
 
     /// The counter's value.
     public var value: Int {
