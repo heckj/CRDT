@@ -3,8 +3,8 @@
 import PackageDescription
 
 var globalSwiftSettings: [PackageDescription.SwiftSetting] = []
-#if swift(>=5.7)
-    #if canImport(Foundation)
+#if canImport(Foundation)
+    #if swift(>=5.7) // && swift(<5.8)
         import Foundation
         if ProcessInfo.processInfo.environment["CI"] != nil {
             globalSwiftSettings.append(.unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"]))
@@ -23,6 +23,11 @@ var globalSwiftSettings: [PackageDescription.SwiftSetting] = []
              constraints, essentially as they will work in Swift 6.
              */
         }
+//    #elseif swift(>=5.8)
+//        import Foundation
+//        if ProcessInfo.processInfo.environment["CI"] != nil {
+//            globalSwiftSettings.append(.enableExperimentalFeature("StrictConcurrency"))
+//        }
     #endif
 #endif
 
