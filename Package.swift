@@ -6,6 +6,7 @@ var globalSwiftSettings: [PackageDescription.SwiftSetting] = []
 #if canImport(Foundation)
     #if swift(>=5.7) // && swift(<5.8)
         import Foundation
+
         if ProcessInfo.processInfo.environment["CI"] != nil {
             globalSwiftSettings.append(.unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"]))
             /*
