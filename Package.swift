@@ -3,7 +3,7 @@
 import PackageDescription
 
 var globalSwiftSettings: [PackageDescription.SwiftSetting] = [
-        .enableExperimentalFeature("StrictConcurrency")
+    .enableExperimentalFeature("StrictConcurrency"),
 ]
 
 let package = Package(
