@@ -9,12 +9,6 @@ import XCTest
 // These tests are placeholders in order to verify code examples in the documentation work as expected.
 
 // used in ReplicatingCRDTs.md
-extension UUID: Comparable {
-    public static func < (lhs: UUID, rhs: UUID) -> Bool {
-        lhs.uuidString < rhs.uuidString
-    }
-}
-
 final class DocTests: XCTestCase {
     func testReplicatingCRDTs_1() throws {
         // used in ReplicatingCRDTs.md
