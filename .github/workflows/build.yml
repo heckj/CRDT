@@ -18,29 +18,8 @@ jobs:
     - name: Show Build Version
       run: xcodebuild -version
 
-    # - name: Show Build Settings
-    #   run: xcodebuild -scheme SwiftViz -showBuildSettings
-
-    # - name: Show Build SDK
-    #   run: xcodebuild -scheme SwiftViz -showsdks
-    # xcodebuild
-
     - name: build and test
       run: swift test --enable-code-coverage -v
-
-      #- name: Xcode iOS build
-      #run: xcodebuild clean build -scheme SwiftVizScale-Package -destination 'platform=iOS Simulator,OS=15.5,name=iPhone 8' -showBuildTimingSummary
-
-        #- name: check against API breaking changes
-        #  run: swift package diagnose-api-breaking-changes 0.5.0
-
-    # - name: env review
-    #   run: env
-
-      #- name: doc utility build verification
-      # run: |
-      #  cd utils
-      #  swift build
 
     - name: Prepare Code Coverage
       run: xcrun llvm-cov export -format="lcov" .build/debug/CRDTPackageTests.xctest/Contents/MacOS/CRDTPackageTests -instr-profile .build/debug/codecov/default.profdata > info.lcov
