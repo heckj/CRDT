@@ -160,30 +160,32 @@ func parseJSONIntoTrace(topOfTrace: JSONValue) async -> Trace {
 
 @_dynamicReplacement(for: registerBenchmarks) // And this is how we register our benchmarks
 func benchmarks() {
-    Benchmark.defaultConfiguration.desiredIterations = .count(300)
-    Benchmark.defaultConfiguration.desiredDuration = .seconds(5)
+    Benchmark.defaultConfiguration.maxIterations = .count(300)
+    Benchmark.defaultConfiguration.maxDuration = .seconds(5)
 
-//    Benchmark("Loading JSON trace data",
-//              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 20)) { benchmark in
-//        for _ in benchmark.throughputIterations {
-//            blackHole(await loadEditingTrace())
-//        }
-//    }
-//
-//    Benchmark("parse JSON with Swift Extras parser",
-//              configuration: .init(metrics: [.throughput, .wallClock], desiredIterations: 50)) { benchmark in
-//        for _ in benchmark.throughputIterations {
-//            let data = await loadEditingTrace()
-//            benchmark.startMeasurement()
-//            blackHole(await parseDataIntoJSON(data: data))
-//            benchmark.stopMeasurement()
-//        }
-//    }
+    Benchmark("Loading JSON trace data",
+              configuration: .init(metrics: [.throughput, .wallClock]))
+    { benchmark in
+        for _ in benchmark.scaledIterations {
+            await blackHole(loadEditingTrace())
+        }
+    }
+
+    Benchmark("parse JSON with Swift Extras parser",
+              configuration: .init(metrics: [.throughput, .wallClock]))
+    { benchmark in
+        for _ in benchmark.scaledIterations {
+            let data = await loadEditingTrace()
+            benchmark.startMeasurement()
+            await blackHole(parseDataIntoJSON(data: data))
+            benchmark.stopMeasurement()
+        }
+    }
 
     Benchmark("Custom parse JSON into trace",
               configuration: .init(metrics: [.throughput, .wallClock]))
     { benchmark in
-        for _ in benchmark.throughputIterations {
+        for _ in benchmark.scaledIterations {
             let data = await loadEditingTrace()
             let jsonValue = await parseDataIntoJSON(data: data)
             benchmark.startMeasurement()
@@ -195,7 +197,7 @@ func benchmarks() {
     Benchmark("Foundation decode JSON into trace",
               configuration: .init(metrics: [.throughput, .wallClock]))
     { benchmark in
-        for _ in benchmark.throughputIterations {
+        for _ in benchmark.scaledIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
             await blackHole(decodeIntoTrace(data: data))
@@ -206,7 +208,7 @@ func benchmarks() {
     Benchmark("ExtrasJSON decode JSON into trace",
               configuration: .init(metrics: [.throughput, .wallClock]))
     { benchmark in
-        for _ in benchmark.throughputIterations {
+        for _ in benchmark.scaledIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
             await blackHole(decodeXIntoTrace(data: data))
@@ -217,7 +219,7 @@ func benchmarks() {
     Benchmark("ZippyJSON decode JSON into trace",
               configuration: .init(metrics: [.throughput, .wallClock]))
     { benchmark in
-        for _ in benchmark.throughputIterations {
+        for _ in benchmark.scaledIterations {
             let data = await loadEditingTrace()
             benchmark.startMeasurement()
             await blackHole(decodeZIntoTrace(data: data))
@@ -225,33 +227,36 @@ func benchmarks() {
         }
     }
 
-//    Benchmark("Create single-character List CRDT",
-//              configuration: .init(metrics: BenchmarkMetric.all, throughputScalingFactor: .kilo)) { benchmark in
-//        for _ in benchmark.throughputIterations {
-//            blackHole(blackHole(List(actorId: "a", ["a"])))
-//        }
-//    }
-//
-//    Benchmark("List six-character append",
-//              configuration: .init(metrics: [.throughput, .wallClock], throughputScalingFactor: .kilo)) { benchmark in
-//        for _ in benchmark.throughputIterations {
-//            var mylist = List(actorId: "a", ["a"])
-//            benchmark.startMeasurement()
-//            mylist.append(" hello")
-//            benchmark.stopMeasurement()
-//        }
-//    }
-//
-//    Benchmark("List six-character append, individual characters",
-//              configuration: .init(metrics: [.throughput, .wallClock], throughputScalingFactor: .kilo)) { benchmark in
-//        for _ in benchmark.throughputIterations {
-//            var mylist = List(actorId: "a", ["a"])
-//            let appendList = [" ", "h", "e", "l", "l", "o"]
-//            benchmark.startMeasurement()
-//            for val in appendList {
-//                mylist.append(val)
-//            }
-//            benchmark.stopMeasurement()
-//        }
-//    }
+    Benchmark("Create single-character List CRDT",
+              configuration: .init(metrics: BenchmarkMetric.all, scalingFactor: .kilo))
+    { benchmark in
+        for _ in benchmark.scaledIterations {
+            blackHole(blackHole(List(actorId: "a", ["a"])))
+        }
+    }
+
+    Benchmark("List six-character append",
+              configuration: .init(metrics: [.throughput, .wallClock], scalingFactor: .kilo))
+    { benchmark in
+        for _ in benchmark.scaledIterations {
+            var mylist = List(actorId: "a", ["a"])
+            benchmark.startMeasurement()
+            mylist.append(" hello")
+            benchmark.stopMeasurement()
+        }
+    }
+
+    Benchmark("List six-character append, individual characters",
+              configuration: .init(metrics: [.throughput, .wallClock], scalingFactor: .kilo))
+    { benchmark in
+        for _ in benchmark.scaledIterations {
+            var mylist = List(actorId: "a", ["a"])
+            let appendList = [" ", "h", "e", "l", "l", "o"]
+            benchmark.startMeasurement()
+            for val in appendList {
+                mylist.append(val)
+            }
+            benchmark.stopMeasurement()
+        }
+    }
 }
