@@ -75,7 +75,7 @@ final class grokTests: XCTestCase {
         // size of binary structure: 40 bytes
 
         // Deserialize a received Data object from `binaryData`
-        let decodedInfo = try CRDT_BookInfo(serializedData: binaryData)
+        let decodedInfo = try CRDT_BookInfo(serializedBytes: binaryData)
         XCTAssertEqual(info, decodedInfo)
 
         // Serialize to JSON format as a Data object
