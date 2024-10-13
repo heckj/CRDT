@@ -8,4 +8,3 @@ General format of the JSON:
 
 ref article for decoding in an enum w/ associated value in swift:
 https://www.donnywals.com/splitting-a-json-object-into-an-enum-and-an-associated-object-with-codable/
-
